@@ -250,9 +250,9 @@ if (MAIN_WINDOW_VITE_DEV_SERVER_URL) {
 } else {
   mainWindow.loadFile(path.join(__dirname, `../renderer/${MAIN_WINDOW_VITE_NAME}/html/index.html`));
 }
-
-
 ```
+
+> 记得关注以下 tsconfig.app.json 中的 include 部分
 
 ## 修改 package.json 的 main 属性
 
