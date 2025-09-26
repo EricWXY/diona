@@ -5,9 +5,12 @@
 		"target": "ES2020",
 		"useDefineForClassFields": true,
 		"module": "ESNext",
-		"lib": ["ES2020", "DOM", "DOM.Iterable"],
+		"lib": [
+			"ES2020",
+			"DOM",
+			"DOM.Iterable"
+		],
 		"skipLibCheck": true,
-
 		/* Bundler mode */
 		"moduleResolution": "Bundler",
 		"allowImportingTsExtensions": true,
@@ -16,23 +19,32 @@
 		"moduleDetection": "force",
 		"noEmit": true,
 		"jsx": "preserve",
-
 		/* Linting */
 		"strict": true,
 		"noUnusedLocals": true,
 		"noUnusedParameters": true,
 		"noFallthroughCasesInSwitch": true,
-
 		"baseUrl": "./",
 		"paths": {
-			"@/*": ["./src/*"]
+			"@common/*": [
+				"./common/*"
+			],
+			"@renderer/*": [
+				"./renderer/*"
+			],
+			"@main/*": [
+				"./main/*"
+			],
+			"@locales/*": [
+				"locales/*"
+			]
 		}
 	},
 	"include": [
 		"forge.env.d.ts",
-		"src/**/*.ts",
-		"src/**/*.tsx",
-		"src/**/*.vue",
-		"src/**/*.d.ts"
-, "renderer/App.vue", "preload.ts", "main/main.ts", "renderer/renderer.ts"	]
+		"renderer/**/*.tsx",
+		"renderer/**/*.vue",
+		"**/*.d.ts",
+		"**/*.ts",
+	]
 }
