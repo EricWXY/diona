@@ -1,0 +1,143 @@
+{
+  "window": {
+    "minimize": "最小化",
+    "maximize": "最大化",
+    "restore": "还原",
+    "close": "关闭"
+  },
+  "main": {
+    "welcome": {
+      "helloMessage": "你好，我是诺艾尔"
+    },
+    "conversation": {
+      "placeholder": "输入消息...",
+      "newConversation": "新对话",
+      "selectModel": "请选择模型",
+      "createConversation": "创建对话",
+      "searchPlaceholder": "搜索对话...",
+      "goSettings": "快去",
+      "settings": "设置窗口",
+      "addModel": "添加模型",
+      "dialog": {
+        "title": "确认删除",
+        "content": "确定要删除这个对话吗？",
+        "content_1": "确定要删除选中的对话吗？此操作不可撤销。"
+      },
+      "operations": {
+        "pin": "置顶所选",
+        "del": "删除所选",
+        "selectAll": "全选",
+        "cancel": "取消"
+      }
+    },
+    "sidebar": {
+      "conversations": "对话",
+      "settings": "设置",
+      "help": "帮助"
+    },
+    "message": {
+      "dialog": {
+        "title": "确认删除",
+        "messageDelete": "确认删除该条消息？",
+        "batchDelete": "确认删除选中的消息？",
+        "copySuccess": "复制成功"
+      },
+      "batchActions": {
+        "deleteSelected": "删除选中项"
+      },
+      "rendering": "思考中...",
+      "stoppedGeneration": "(已停止生成)",
+      "sending": "发送中",
+      "stopGeneration": "停止生成",
+      "send": "发送"
+    }
+  },
+  "dialog": {
+    "cancel": "取消",
+    "confirm": "确认"
+  },
+  "settings": {
+    "title": "设置",
+    "base": "基础设置",
+    "provider": {
+      "modelConfig": "模型配置"
+    },
+    "providers": {
+      "defaultModel": "默认模型",
+      "apiKey": "API密钥",
+      "apiUrl": "API地址"
+    },
+    "theme": {
+      "label": "主题设置",
+      "dark": "深色主题",
+      "light": "浅色主题",
+      "system": "跟随系统",
+      "primaryColor": "主题颜色"
+    },
+    "appearance": {
+      "fontSize": "字体大小",
+      "fontSizeOptions": {
+        "10": "极小 (10px)",
+        "12": "小 (12px)",
+        "14": "正常 (14px)",
+        "16": "中 (16px)",
+        "18": "大 (18px)",
+        "20": "较大 (20px)",
+        "24": "超大 (24px)"
+      }
+    },
+    "behavior": {
+      "minimizeToTray": "关闭时最小化到托盘"
+    },
+    "language": {
+      "label": "语言设置"
+    }
+  },
+  "menu": {
+    "conversation": {
+      "newConversation": "新建对话",
+      "sortBy": "排序方式",
+      "sortByCreateTime": "按创建时间排序",
+      "sortByUpdateTime": "按更新时间排序",
+      "sortByName": "按名称排序",
+      "sortByModel": "按模型排序",
+      "sortAscending": "递增",
+      "sortDescending": "递减",
+      "pinConversation": "置顶对话",
+      "unpinConversation": "取消置顶",
+      "renameConversation": "重命名对话",
+      "delConversation": "删除对话",
+      "batchOperations": "批量操作"
+    },
+    "message": {
+      "copyMessage": "复制消息",
+      "deleteMessage": "删除消息",
+      "selectMessage": "选择消息"
+    }
+  },
+  "tray": {
+    "tooltip": "诺艾尔",
+    "showWindow": "显示窗口",
+    "exit": "退出"
+  },
+  "timeAgo": {
+    "justNow": "刚刚",
+    "minutes": "{count}分钟前",
+    "hours": "{count}小时前",
+    "days": "{count}天前",
+    "months": "{count}个月前",
+    "years": "{count}年前",
+    "weekday": {
+      "sun": "星期日",
+      "mon": "星期一",
+      "tue": "星期二",
+      "wed": "星期三",
+      "thu": "星期四",
+      "fri": "星期五",
+      "sat": "星期六"
+    }
+  },
+  "app": {
+    "title": "迪奥娜"
+  }
+}

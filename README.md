@@ -106,3 +106,160 @@ npm install
 ```
 
 --------------------------------------------------------
+
+# section_2
+
+- [ ] 项目目录改造（按照进程和功能扁平化分区）
+
+## 安装依赖
+
+```bash
+npm i naive-ui@2.42.0 vfonts@0.0.3 pinia@3.0.3 vue-router@4.5.1 vue-i18n@11.1.9
+npm i -D unplugin-auto-import@20.1.0
+```
+
+## 目录改造
+
+> 先跑一遍 `npm run start` 看一下效果
+
+开始改造
+
+<!-- - forge.config.ts
+- 目录重命名
+- renderer 多入口改造 -->
+
+## 创建目录
+```bash
+# 目录结构
+.
+├── common # 公共模块
+├── html # 页面入口
+├── locales # 国际化
+├── main # 主进程
+│   ├── index.ts
+├── renderer # 渲染进程
+│   ├── index.ts
+│   ├── App.vue
+├── preload.ts # 预加载脚本
+```
+创建 `html/index.html` 作为主窗口的入口
+
+```html
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="Content-Security-Policy" content="script-src 'self';">
+</head>
+
+<body>
+  <div id="app"></div>
+  <script type="module" src="../renderer/index.ts"></script>
+  <!-- 对应 渲染进程相关的入口 -->
+</body>
+
+</html>
+
+```
+同样的内容 复制两份分别粘贴同目录的 `dialog.html` 和 `setting.html`
+
+
+## 改造 vite.renderer.config.ts
+
+```typescript
+// ... import
+
+export default defineConfig({
+  // ...其他配置
+  plugins:[
+    // ... 默认部分，
+    autoImport({ // 优化开发体验
+        imports: ['vue', 'vue-router', 'pinia', 'vue-i18n', '@vueuse/core'],
+        dts: 'renderer/auto-imports.d.ts'
+    })
+  ],
+  css: {
+    transformer: 'lightningcss' as CSSOptions['transformer'],
+  },
+  build: {
+    target: 'es2022',
+    publicDir: 'public',
+    rollupOptions: { // 多入口配置(对应多个窗口)
+      input: [
+        resolve(__dirname, 'html/index.html'),
+        resolve(__dirname, 'html/dialog.html'),
+        resolve(__dirname, 'html/setting.html'),
+      ]
+    }
+  },
+  resolve: {
+    alias: {
+      '@common': resolve(__dirname, 'common'),
+      '@main': resolve(__dirname, 'main'),
+      '@renderer': resolve(__dirname, 'renderer'),
+      '@locales': resolve(__dirname, 'locales'),
+    }
+  }
+})
+```
+
+## 改造 forge.config.ts
+
+```typescript
+// ... import
+
+export default defineConfig({
+  // ...其他配置
+  plugins: [
+    // ... 默认部分，
+    {
+      name: '@electron-forge/plugin-vite',
+      config: {
+        build: [
+          {
+            entry: 'main/index.ts', // 主进程入口
+            config: 'vite.main.config.ts',
+            target: 'main',
+          },
+          {
+            entry: 'preload.ts',// 预加载脚本入口
+            config: 'vite.preload.config.ts',
+            target: 'preload',
+          },
+        ],
+        renderer: [ // 这里不用做修改
+          {
+            name:'main_window',
+            config: 'vite.renderer.config.ts',
+          }
+        ]
+      }
+    }
+  ],
+});
+```
+
+## 改造 main/index.ts
+
+```typescript
+
+// ... 其他部分
+if (MAIN_WINDOW_VITE_DEV_SERVER_URL) {
+  mainWindow.loadURL(`${MAIN_WINDOW_VITE_DEV_SERVER_URL}${'/html/'}`);
+} else {
+  mainWindow.loadFile(path.join(__dirname, `../renderer/${MAIN_WINDOW_VITE_NAME}/html/index.html`));
+}
+
+
+```
+
+## 修改 package.json 的 main 属性
+
+```JSON
+{
+  "main": ".vite/build/index.js", // 主进程入口
+}
+```
+
+改造完成 `npm run start` 正常运行

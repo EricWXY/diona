@@ -34,5 +34,5 @@
 		"src/**/*.tsx",
 		"src/**/*.vue",
 		"src/**/*.d.ts"
-	]
+, "renderer/App.vue", "preload.ts", "main/main.ts", "renderer/renderer.ts"	]
 }
