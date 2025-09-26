@@ -11,7 +11,10 @@
 	"compilerOptions": {
 		"baseUrl": "./",
 		"paths": {
-			"@/*": ["./src/*"]
+			"@common/*": ["common/*"],
+			"@main/*": ["./main/*"],
+			"@renderer/*": ["./renderer/*"],
+			"@locales/*": ["./locales/*"],
 		}
 	}
 }
