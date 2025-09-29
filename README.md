@@ -109,7 +109,7 @@ npm install
 
 # section_2
 
-- [ ] 项目目录改造（按照进程和功能扁平化分区）
+- [x] 项目目录改造（按照进程和功能扁平化分区）
 
 ## 安装依赖
 
@@ -263,3 +263,313 @@ if (MAIN_WINDOW_VITE_DEV_SERVER_URL) {
 ```
 
 改造完成 `npm run start` 正常运行
+
+--------------------------------------------------------
+
+# section_3
+
+- [ ] 自定义标题栏
+
+## 安装依赖
+
+```bash
+npm i -D @iconify/vue@5.0.0 @iconify-json/material-symbols@1.2.29
+```
+
+### main 进程改造 WindowService
+
+```typescript
+/// main/service/WindowService.ts
+
+import type { WindowNames } from '@common/types';
+
+import { IPC_EVENTS } from '@common/constants';
+import { BrowserWindow, BrowserWindowConstructorOptions, ipcMain, IpcMainInvokeEvent, type IpcMainEvent } from 'electron';
+import { debounce } from '@common/utils';
+
+import path from 'node:path';
+
+interface SizeOptions {
+  width: number; // 窗口宽度
+  height: number; // 窗口高度
+  maxWidth?: number; // 窗口最大宽度，可选
+  maxHeight?: number; // 窗口最大高度，可选
+  minWidth?: number; // 窗口最小宽度，可选
+  minHeight?: number; // 窗口最小高度，可选
+}
+
+const SHARED_WINDOW_OPTIONS = {
+  titleBarStyle: 'hidden',
+  title: 'Diona',
+  webPreferences: {
+    nodeIntegration: false, // 禁用 Node.js 集成，提高安全性
+    contextIsolation: true, // 启用上下文隔离，防止渲染进程访问主进程 API
+    sandbox: true, // 启用沙箱模式，进一步增强安全性
+    backgroundThrottling: false,
+    preload: path.join(__dirname, 'preload.js'),
+  },
+} as BrowserWindowConstructorOptions;
+
+class WindowService {
+  private static _instance: WindowService;
+
+  private constructor() {
+    this._setupIpcEvents();
+  }
+
+  private _setupIpcEvents() {
+    const handleCloseWindow = (e: IpcMainEvent) => {
+      this.close(BrowserWindow.fromWebContents(e.sender));
+    }
+    const handleMinimizeWindow = (e: IpcMainEvent) => {
+      BrowserWindow.fromWebContents(e.sender)?.minimize();
+    }
+    const handleMaximizeWindow = (e: IpcMainEvent) => {
+      this.toggleMax(BrowserWindow.fromWebContents(e.sender));
+    }
+    const handleIsWindowMaximized = (e: IpcMainInvokeEvent) => {
+      return BrowserWindow.fromWebContents(e.sender)?.isMaximized() ?? false;
+    }
+
+    ipcMain.on(IPC_EVENTS.CLOSE_WINDOW, handleCloseWindow);
+    ipcMain.on(IPC_EVENTS.MINIMIZE_WINDOW, handleMinimizeWindow);
+    ipcMain.on(IPC_EVENTS.MAXIMIZE_WINDOW, handleMaximizeWindow);
+    ipcMain.handle(IPC_EVENTS.IS_WINDOW_MAXIMIZED, handleIsWindowMaximized);
+  }
+
+  public static getInstance(): WindowService {
+    if (!this._instance) {
+      this._instance = new WindowService();
+    }
+    return this._instance;
+  }
+
+  public create(name: WindowNames, size: SizeOptions) {
+    const window = new BrowserWindow({
+      ...SHARED_WINDOW_OPTIONS,
+      ...size,
+    })
+
+    this
+      ._setupWinLifecycle(window, name)
+      ._loadWindowTemplate(window, name)
+
+    return window;
+  }
+  private _setupWinLifecycle(window: BrowserWindow, _name: WindowNames) {
+    const updateWinStatus = debounce(() => !window?.isDestroyed()
+      && window?.webContents?.send(IPC_EVENTS.MAXIMIZE_WINDOW + 'back', window?.isMaximized()), 80);
+    window.once('closed', () => {
+      window?.destroy();
+      window?.removeListener('resize', updateWinStatus);
+    });
+    window.on('resize', updateWinStatus)
+    return this;
+  }
+
+  private _loadWindowTemplate(window: BrowserWindow, name: WindowNames) {
+    // 检查是否存在开发服务器 URL，若存在则表示处于开发环境
+    if (MAIN_WINDOW_VITE_DEV_SERVER_URL) {
+      return window.loadURL(`${MAIN_WINDOW_VITE_DEV_SERVER_URL}${'/html/' + (name === 'main' ? '' : name)}`);
+    }
+    window.loadFile(path.join(__dirname, `../renderer/${MAIN_WINDOW_VITE_NAME}/html/${name === 'main' ? 'index' : name}.html`));
+  }
+
+  public close(target: BrowserWindow | void | null) {
+    if (!target) return;
+    target?.close();
+  }
+
+  public toggleMax(target: BrowserWindow | void | null) {
+    if (!target) return;
+    target.isMaximized() ? target.unmaximize() : target.maximize();
+  }
+
+}
+
+export const windowManager = WindowService.getInstance();
+
+export default windowManager;
+```
+
+写好 窗口管理 之后 可以替换之前的 窗口创建 代码
+
+```typescript
+/// main/index.ts
+
+import { app, BrowserWindow } from 'electron';
+import started from 'electron-squirrel-startup';
+import { setupWindows } from './wins';
+import windowManager from './service/WindowService';
+
+// Handle creating/removing shortcuts on Windows when installing/uninstalling.
+if (started) {
+  app.quit();
+}
+
+// This method will be called when Electron has finished
+// initialization and is ready to create browser windows.
+// Some APIs can only be used after this event occurs.
+app.whenReady().then(() => {
+  setupWindows();
+
+  // On OS X it's common to re-create a window in the app when the
+  // dock icon is clicked and there are no other windows open.
+  app.on('activate', () => {
+    if (BrowserWindow.getAllWindows().length === 0) {
+      setupWindows();
+    }
+  });
+});
+```
+
+### renderer 进程
+
+首先需要 定义 `gloal.d.ts`
+
+```typescript
+
+interface WindowApi {
+  closeWindow: () => void;
+  minimizeWindow: () => void;
+  maximizeWindow: () => void;
+  onWindowMaximized: (callback: (isMaximized: boolean) => void) => void;
+  isWindowMaximized: () => Promise<boolean>;
+}
+
+declare interface Window {
+  api: WindowApi;
+}
+
+```
+
+然会后 在 `preload.ts` 中 实现 这些 方法
+
+这里注意 ipc 的两种 通信方式 `send & on` `invoke & handle`
+
+```typescript
+import { contextBridge, ipcRenderer } from 'electron';
+import { IPC_EVENTS } from '@common/constants';
+
+const api: WindowApi = {
+  closeWindow: () => ipcRenderer.send(IPC_EVENTS.CLOSE_WINDOW),
+  minimizeWindow: () => ipcRenderer.send(IPC_EVENTS.MINIMIZE_WINDOW),
+  maximizeWindow: () => ipcRenderer.send(IPC_EVENTS.MAXIMIZE_WINDOW),
+  onWindowMaximized: (callback: (isMaximized: boolean) => void) => ipcRenderer.on(IPC_EVENTS.MAXIMIZE_WINDOW + 'back', (_, isMaximized) => callback(isMaximized)),
+  isWindowMaximized: () => ipcRenderer.invoke(IPC_EVENTS.IS_WINDOW_MAXIMIZED),
+}
+
+contextBridge.exposeInMainWorld('api', api);
+```
+
+定义了 预加载脚本 就可以在 renderer 进程 中 调用 这些 方法
+
+### 创建自定义的标题栏组件
+
+```typescript
+/// renderer/hooks/useWinManager.ts
+export function useWinManager() {
+  const isMaximized = ref(false)
+
+  function closeWindow() {
+    window.api.closeWindow();
+  }
+
+  function minimizeWindow() {
+    window.api.minimizeWindow();
+  }
+
+  function maximizeWindow() {
+    window.api.maximizeWindow();
+  }
+
+  onMounted(async () => {
+    await nextTick();
+    isMaximized.value = await window.api.isWindowMaximized();
+    window.api.onWindowMaximized((_isMaximized: boolean) => isMaximized.value = _isMaximized);
+  })
+
+  return {
+    isMaximized,
+    closeWindow,
+    minimizeWindow,
+    maximizeWindow
+  }
+};
+export default useWinManager;
+```
+
+/// renderer/components/TitleBar.vue
+```vue
+<script setup lang="ts">
+import { Icon as IconifyIcon } from '@iconify/vue';
+import { useWinManager } from '@renderer/hooks/useWinManager';
+
+interface TitleBarProps {
+  title?: string;
+  isMaximizable?: boolean;
+  isMinimizable?: boolean;
+  isClosable?: boolean;
+}
+defineOptions({ name: 'TitleBar' })
+withDefaults(defineProps<TitleBarProps>(), {
+  isMaximizable: true,
+  isMinimizable: true,
+  isClosable: true,
+})
+const emit = defineEmits(['close']);
+const btnSize = 15;
+
+const {
+  isMaximized,
+  closeWindow,
+  minimizeWindow,
+  maximizeWindow
+} = useWinManager();
+
+function handleClose() {
+  emit('close');
+  closeWindow();
+}
+</script>
+<template>
+  <header class="title-bar flex items-start justify-between h-[30px]">
+    <div class="title-bar-main flex-auto">
+      <slot>{{ title ?? '' }}</slot>
+    </div>
+    <div class="title-bar-controls w-[80px] flex items-center justify-end">
+      <button v-show="isMinimizable" class="title-bar-button cursor-pointer hover:bg-input" @click="minimizeWindow">
+        <iconify-icon icon="material-symbols:chrome-minimize-sharp" :width="btnSize" :height="btnSize" />
+      </button>
+      <button v-show="isMaximizable" class="title-bar-button cursor-pointer hover:bg-input" @click="maximizeWindow">
+        <iconify-icon icon="material-symbols:chrome-maximize-outline-sharp" :width="btnSize" :height="btnSize"
+          v-show="!isMaximized" />
+        <iconify-icon icon="material-symbols:chrome-restore-outline-sharp" :width="btnSize" :height="btnSize"
+          v-show="isMaximized" />
+      </button>
+      <button v-show="isClosable" class="close-button title-bar-button cursor-pointer hover:bg-red-300 "
+        @click="handleClose">
+        <iconify-icon icon="material-symbols:close" :width="btnSize" :height="btnSize"></iconify-icon>
+      </button>
+    </div>
+  </header>
+</template>
+
+<style scoped>
+.title-bar-button {
+  padding: 2px;
+  border-radius: 50%;
+  margin: .2rem;
+}
+</style>
+```
+有了这个组件之后就可以在 `App.vue` 中 引入它了，三个功能按钮就都可以用了。但是没有 标题栏的拖动
+
+可以利用 css 属性去实现 标题栏的拖动
+
+```css
+.drag-region {
+  -webkit-app-region: drag;
+}
+```
+
