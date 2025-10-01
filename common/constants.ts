@@ -8,7 +8,7 @@ export enum IPC_EVENTS {
   LOG_INFO = 'log-info',
   LOG_WARN = 'log-warn',
   LOG_ERROR = 'log-error',
-  LOG_FATAL = 'log-fatal',
+  // LOG_FATAL = 'log-fatal',
 }
 
 

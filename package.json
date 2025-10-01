@@ -1,6 +1,6 @@
 {
-  "name": "electron-demo",
-  "productName": "electron-demo",
+  "name": "diona",
+  "productName": "Diona",
   "version": "1.0.0",
   "description": "My Electron application description",
   "main": ".vite/build/index.js",
