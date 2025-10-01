@@ -3,6 +3,10 @@ import { NConfigProvider } from 'naive-ui';
 import TitleBar from '@renderer/components/TitleBar.vue';
 import DragRegion from '@renderer/components/DragRegion.vue';
 
+
+onMounted(() => {
+  console.log('App mounted');
+});
 </script>
 <template>
   <n-config-provider class="h-[100vh] w-[100vw] flex">
