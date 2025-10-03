@@ -1,0 +1,18 @@
+@import './dark.css';
+@import './light.css';
+
+@theme {
+  --color-primary: var(--primary-color);
+  --color-primary-light: var(--primary-color-light);
+  --color-primary-dark: var(--primary-color-dark);
+  --color-primary-hover: var(--primary-color-hover);
+  --color-primary-active: var(--primary-color-active);
+  --color-primary-subtle: var(--primary-color-subtle);
+  --color-main: var(--bg-color);
+  --color-secondary: var(--bg-secondary);
+  --color-input: var(--input-bg);
+  --color-bubble-self: var(--bubble-self);
+  --color-bubble-others: var(--bubble-others);
+  --color-tx-primary: var(--text-primary);
+  --color-tx-secondary: var(--text-secondary);
+}

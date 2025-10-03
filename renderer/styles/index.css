@@ -1,0 +1,32 @@
+@import "tailwindcss";
+@import "./theme/index.css";
+
+* {
+  user-select: none;
+}
+
+body, #app {
+  overflow: hidden;
+}
+
+body {
+  font-size: 16px;
+  line-height: 1.6;
+  height: 100vh;
+  width: 100vw;
+}
+
+#app {
+  height: 100%;
+  width: 100%;
+  background-color: var(--bg-secondary);
+}
+
+.no-drag {
+  -webkit-app-region: no-drag;
+}
+
+.drag-region {
+  -webkit-app-region: drag;
+}
+

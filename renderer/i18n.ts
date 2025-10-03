@@ -2,6 +2,7 @@ import { createI18n, type I18nOptions } from 'vue-i18n'
 
 async function createI18nInstance() {
   const options: I18nOptions = {
+    legacy: false,
     locale: 'zh',
     fallbackLocale: 'zh',
     messages: {
