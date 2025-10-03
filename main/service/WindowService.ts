@@ -1,7 +1,7 @@
 import type { WindowNames } from '@common/types';
 
 import { IPC_EVENTS } from '@common/constants';
-import { BrowserWindow, BrowserWindowConstructorOptions, ipcMain, IpcMainInvokeEvent, type IpcMainEvent } from 'electron';
+import { BrowserWindow, BrowserWindowConstructorOptions, ipcMain, IpcMainInvokeEvent, nativeTheme, type IpcMainEvent } from 'electron';
 import { debounce } from '@common/utils';
 
 import logManager from './LogService';
@@ -19,6 +19,8 @@ interface SizeOptions {
 const SHARED_WINDOW_OPTIONS = {
   titleBarStyle: 'hidden',
   title: 'Diona',
+  darkTheme: nativeTheme.shouldUseDarkColors,
+  backgroundColor: nativeTheme.shouldUseDarkColors ? '#2C2C2C' : '#FFFFFF',
   webPreferences: {
     nodeIntegration: false, // 禁用 Node.js 集成，提高安全性
     contextIsolation: true, // 启用上下文隔离，防止渲染进程访问主进程 API

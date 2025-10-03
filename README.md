@@ -578,7 +578,7 @@ function handleClose() {
 
 # section_4
 
-- [ ] 日志/异常 管理
+- [x] 日志/异常 管理
 
 ## 安装依赖
 
@@ -787,4 +787,77 @@ window.onerror = (message, source, lineno, colno, error) => {
 window.onunhandledrejection = (event) => {
   logger.error('Unhandled Promise Rejection:', event);
 };
+```
+
+--------------------------------------------------------
+
+# section_5
+
+- [x] css 主题
+- [x] 首页布局
+
+## css 变量
+
+```css
+/* dark.css */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --primary-color: #07C160;
+    --bg-color: #1E1E1E;
+    --bg-secondary: #2C2C2C;
+
+    --text-primary: #E0E0E0;
+    --text-secondary: #A0A0A0;
+
+    --bubble-self: var(--primary-color);
+    --bubble-others: #3A3A3A;
+    --input-bg: #333333;
+    --ripple-color: var(--text-secondary);
+    --ripple-opacity: 0.2;
+  }
+}
+
+```
+
+```css
+/* light.css */
+@media (prefers-color-scheme: light) {
+  :root {
+    --primary-color: #07C160;
+    --bg-color: #FFFFFF;
+    --bg-secondary: #F5F5F5;
+    --text-primary: #000000;
+    --text-secondary: #7F7F7F;
+
+    --header-bg: var(--primary-color);
+    --bubble-self: var(--primary-color);
+    --bubble-others: #FFFFFF;
+    --input-bg: #F0F0F0;
+    --ripple-color: var(--text-secondary);
+    --ripple-opacity: 0.2;
+  }
+}
+
+```
+
+```css
+/* theme/index.css */
+@import './dark.css';
+@import './light.css';
+
+@theme {
+  --color-primary: var(--primary-color);
+  --color-primary-light: var(--primary-color-light);
+  --color-primary-dark: var(--primary-color-dark);
+  --color-primary-hover: var(--primary-color-hover);
+  --color-primary-active: var(--primary-color-active);
+  --color-primary-subtle: var(--primary-color-subtle);
+  --color-main: var(--bg-color);
+  --color-secondary: var(--bg-secondary);
+  --color-input: var(--input-bg);
+  --color-bubble-self: var(--bubble-self);
+  --color-bubble-others: var(--bubble-others);
+  --color-tx-primary: var(--text-primary);
+  --color-tx-secondary: var(--text-secondary);
+}
 ```

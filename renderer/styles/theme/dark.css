@@ -1,0 +1,17 @@
+@media (prefers-color-scheme: dark) {
+  :root {
+    --primary-color: #07C160;
+    --bg-color: #1E1E1E;
+    --bg-secondary: #2C2C2C;
+
+    --text-primary: #E0E0E0;
+    --text-secondary: #A0A0A0;
+
+    --bubble-self: var(--primary-color);
+    --bubble-others: #3A3A3A;
+    --input-bg: #333333;
+    --ripple-color: var(--text-secondary);
+    --ripple-opacity: 0.2;
+  }
+}
+

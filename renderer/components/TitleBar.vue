@@ -34,7 +34,7 @@ function handleClose() {
     <div class="title-bar-main flex-auto">
       <slot>{{ title ?? '' }}</slot>
     </div>
-    <div class="title-bar-controls w-[80px] flex items-center justify-end">
+    <div class="title-bar-controls w-[80px] flex items-center justify-end text-tx-secondary">
       <button v-show="isMinimizable" class="title-bar-button cursor-pointer hover:bg-input" @click="minimizeWindow">
         <iconify-icon icon="material-symbols:chrome-minimize-sharp" :width="btnSize" :height="btnSize" />
       </button>
