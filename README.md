@@ -861,3 +861,151 @@ window.onunhandledrejection = (event) => {
   --color-tx-secondary: var(--text-secondary);
 }
 ```
+
+--------------------------------------------------------
+
+# section_6
+
+- [ ] ThemeService
+- [ ] 主题切换
+
+## ThemeService
+
+```typescript
+// main/services/ThemeService.ts
+import { BrowserWindow, ipcMain, nativeTheme } from 'electron';
+import { logManager } from './LogService';
+import { IPC_EVENTS } from '@common/constants'
+
+class ThemeService {
+  private static _instance: ThemeService;
+  private _isDark: boolean = nativeTheme.shouldUseDarkColors;
+
+  constructor() {
+    const themeMode = 'dark';
+    if (themeMode) {
+      nativeTheme.themeSource = themeMode;
+      this._isDark = nativeTheme.shouldUseDarkColors;
+    }
+    this._setupIpcEvent();
+    logManager.info('ThemeService initialized successfully.');
+  }
+
+  private _setupIpcEvent() {
+    ipcMain.handle(IPC_EVENTS.SET_THEME_MODE, (_e, mode: ThemeMode) => {
+      nativeTheme.themeSource = mode;
+      return nativeTheme.shouldUseDarkColors;
+    });
+    ipcMain.handle(IPC_EVENTS.GET_THEME_MODE, () => {
+      return nativeTheme.themeSource;
+    });
+    ipcMain.handle(IPC_EVENTS.IS_DARK_THEME, () => {
+      return nativeTheme.shouldUseDarkColors;
+    });
+    nativeTheme.on('updated', () => {
+      this._isDark = nativeTheme.shouldUseDarkColors;
+      BrowserWindow.getAllWindows().forEach(win =>
+        win.webContents.send(IPC_EVENTS.THEME_MODE_UPDATED, this._isDark)
+      );
+    });
+  }
+  public static getInstance() {
+    if (!this._instance) {
+      this._instance = new ThemeService();
+    }
+    return this._instance;
+  }
+
+  public get isDark() {
+    return this._isDark;
+  }
+
+  public get themeMode() {
+    return nativeTheme.themeSource;
+  }
+}
+
+export const themeManager = ThemeService.getInstance();
+export default themeManager;
+```
+
+> themeManager 一定记得要在 main 进程中初始化，否则 ThemeService 不会在系统中实例化
+
+## 主题切换
+
+- 先在 预加载脚本中定义好 api
+- 写一个通用的 hook
+
+```typescript
+// renderer/hooks/useThemeMode.ts
+const iconMap = new Map([
+  ['system', 'material-symbols:auto-awesome-outline'],
+  ['light', 'material-symbols:light-mode-outline'],
+  ['dark', 'material-symbols:dark-mode-outline'],
+])
+export function useThemeMode() {
+  const themeMode = ref<ThemeMode>('dark');
+  const isDark = ref<boolean>(false);
+  const themeIcon = computed(() => iconMap.get(themeMode.value) || 'material-symbols:auto-awesome-outline');
+
+  const themeChangeCallbacks: Array<(mode: ThemeMode) => void> = [];
+
+  function setThemeMode(mode: ThemeMode) {
+    themeMode.value = mode;
+    window.api.setThemeMode(mode);
+  }
+  function getThemeMode() {
+    return themeMode.value;
+  }
+
+  function onThemeChange(callback: (mode: ThemeMode) => void) {
+    themeChangeCallbacks.push(callback);
+  }
+
+  onMounted(async () => {
+    window.api.onSystemThemeChange((_isDark) => window.api.getThemeMode().then(res => {
+      isDark.value = _isDark;
+      if (res !== themeMode.value) themeMode.value = res;
+      themeChangeCallbacks.forEach(cb => cb(res));
+    }));
+    isDark.value = await window.api.isDarkTheme();
+    themeMode.value = await window.api.getThemeMode();
+  });
+
+  return {
+    themeMode,
+    themeIcon,
+    isDark,
+    setThemeMode,
+    getThemeMode,
+    onThemeChange,
+  }
+}
+
+export default useThemeMode;
+```
+
+- 然后在组件中使用
+
+```vue
+<script setup lang="ts">
+import { useThemeMode } from '@renderer/hooks/useThemeMode';
+import { Icon as IconifyIcon } from '@iconify/vue';
+
+defineOptions({ name: 'ThemeSwitcher' });
+
+const {
+  themeIcon,
+  setThemeMode,
+} = useThemeMode();
+const isDarkMode = usePreferredDark();
+
+function toggleThemeMode() {
+  setThemeMode(isDarkMode.value ? 'light' : 'dark');
+}
+</script>
+
+<template>
+  <iconify-icon :icon="themeIcon" width="24" height="24" @click="toggleThemeMode" />
+</template>
+```
