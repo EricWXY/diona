@@ -36,6 +36,6 @@ export const messages: Message[] = [
 
 export const conversations: Conversation[] = [
   { id: 1, selectedModel: 'ERNIE-4.0-8K', title: '光合作用基本原理详解', createdAt: randomDate(startDate, endDate), updatedAt: randomDate(startDate, endDate), providerId: 1, pinned: true },
-  { id: 2, selectedModel: 'qwen-plus', title: '人工智能发展趋势与应用', createdAt: randomDate(startDate, endDate), updatedAt: randomDate(startDate, endDate), providerId: 2, pinned: false },
+  { id: 2, selectedModel: 'qwen-plus', title: '人工智能发展趋势与应用/人工智能发展趋势与', createdAt: randomDate(startDate, endDate), updatedAt: randomDate(startDate, endDate), providerId: 2, pinned: false },
   { id: 3, selectedModel: 'deepseek-chat', title: '量子计算基础概念解析', createdAt: randomDate(startDate, endDate), updatedAt: randomDate(startDate, endDate), providerId: 3, pinned: false },
 ];

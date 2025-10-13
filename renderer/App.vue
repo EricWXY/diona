@@ -15,7 +15,7 @@ onMounted(() => {
     <aside class="sidebar h-full flex flex-shrink-0 flex-col" :style="{ width: sidebarWidth + 'px' }">
       <div class="flex-auto flex">
         <nav-bar />
-        <conversation-list class="flex-auto" />
+        <conversation-list class="flex-auto" :width="sidebarWidth" />
       </div>
     </aside>
     <resize-divider direction="vertical" v-model:size="sidebarWidth" :max-size="800" :min-size="320" />
