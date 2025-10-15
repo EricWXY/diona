@@ -33,3 +33,30 @@ export function throttle<T extends (...args: any[]) => any>(fn: T, interval: num
     }
   };
 }
+
+export function cloneDeep<T>(obj: T): T {
+  if (obj === null || typeof obj !== 'object') {
+    return obj;
+  }
+
+  if (Array.isArray(obj)) {
+    return obj.map(item => cloneDeep(item)) as T;
+  }
+
+  const clone = Object.assign({}, obj);
+  for (const key in clone) {
+    if (Object.prototype.hasOwnProperty.call(clone, key)) {
+      clone[key] = cloneDeep(clone[key]);
+    }
+  }
+  return clone;
+}
+
+export function simpleCloneDeep<T>(obj: T): T {
+  try {
+    return JSON.parse(JSON.stringify(obj));
+  } catch (error) {
+    console.error('simpleCloneDeep failed:', error);
+    return obj;
+  }
+}
