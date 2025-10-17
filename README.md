@@ -1358,3 +1358,125 @@ export const menuManager = MenuService.getInstance();
 export default menuManager;
 
 ```
+
+
+--------------------------------------------------------
+
+# section_11
+
+- [x] 主进程国际化
+- [ ] 对话列表上下文菜单
+
+
+> 主进程国际化(可以考虑第三方的 node 端的 i18n 库,这里需求比较简单就自己搓了)
+
+```typescript
+// main/utils/
+import logManager from '../service/LogService';
+
+import en from '@locales/en.json';
+import zh from '@locales/zh.json';
+
+type MessageSchema = typeof zh;
+const messages: Record<string, MessageSchema> = { en, zh }
+
+export function createTranslator() {
+  return (key?: string) => {
+    if (!key) return void 0;
+    try {
+      const keys = key?.split('.');
+      let result: any = messages['zh'];
+      for (const _key of keys) {
+        result = result[_key];
+      }
+      return result as string;
+    } catch (e) {
+      logManager.error('failed to translate key:', key, e);
+      return key
+    }
+  }
+}
+```
+
+注册菜单
+
+```typescript
+//wins/main.ts
+
+const registerMenus = (window: BrowserWindow) => {
+
+  const conversationItemMenuItemClick = (id: string) => {
+    logManager.logUserOperation(`${IPC_EVENTS.SHOW_CONTEXT_MENU}:${MENU_IDS.CONVERSATION_ITEM}-${id}`)
+    window.webContents.send(`${IPC_EVENTS.SHOW_CONTEXT_MENU}:${MENU_IDS.CONVERSATION_ITEM}`, id);
+  }
+
+  menuManager.register(MENU_IDS.CONVERSATION_ITEM, [
+    {
+      id: CONVERSATION_ITEM_MENU_IDS.PIN,
+      label: 'menu.conversation.pinConversation',
+      click: () => conversationItemMenuItemClick(CONVERSATION_ITEM_MENU_IDS.PIN)
+    },
+    {
+      id: CONVERSATION_ITEM_MENU_IDS.RENAME,
+      label: 'menu.conversation.renameConversation',
+      click: () => conversationItemMenuItemClick(CONVERSATION_ITEM_MENU_IDS.RENAME)
+    },
+    {
+      id: CONVERSATION_ITEM_MENU_IDS.DEL,
+      label: 'menu.conversation.delConversation',
+      click: () => conversationItemMenuItemClick(CONVERSATION_ITEM_MENU_IDS.DEL)
+    },
+  ])
+
+  const conversationListMenuItemClick = (id: string) => {
+    logManager.logUserOperation(`${IPC_EVENTS.SHOW_CONTEXT_MENU}:${MENU_IDS.CONVERSATION_LIST}-${id}`)
+    window.webContents.send(`${IPC_EVENTS.SHOW_CONTEXT_MENU}:${MENU_IDS.CONVERSATION_LIST}`, id);
+  }
+
+  menuManager.register(MENU_IDS.CONVERSATION_LIST, [
+    {
+      id: CONVERSATION_LIST_MENU_IDS.NEW_CONVERSATION,
+      label: 'menu.conversation.newConversation',
+      click: () => conversationListMenuItemClick(CONVERSATION_LIST_MENU_IDS.NEW_CONVERSATION)
+    },
+    { type: 'separator' },
+    {
+      id: CONVERSATION_LIST_MENU_IDS.SORT_BY, label: 'menu.conversation.sortBy', submenu: [
+        { id: CONVERSATION_LIST_MENU_IDS.SORT_BY_CREATE_TIME, label: 'menu.conversation.sortByCreateTime', type: 'radio', checked: false, click: () => conversationListMenuItemClick(CONVERSATION_LIST_MENU_IDS.SORT_BY_CREATE_TIME) },
+        { id: CONVERSATION_LIST_MENU_IDS.SORT_BY_UPDATE_TIME, label: 'menu.conversation.sortByUpdateTime', type: 'radio', checked: false, click: () => conversationListMenuItemClick(CONVERSATION_LIST_MENU_IDS.SORT_BY_UPDATE_TIME) },
+        { id: CONVERSATION_LIST_MENU_IDS.SORT_BY_NAME, label: 'menu.conversation.sortByName', type: 'radio', checked: false, click: () => conversationListMenuItemClick(CONVERSATION_LIST_MENU_IDS.SORT_BY_NAME) },
+        { id: CONVERSATION_LIST_MENU_IDS.SORT_BY_MODEL, label: 'menu.conversation.sortByModel', type: 'radio', checked: false, click: () => conversationListMenuItemClick(CONVERSATION_LIST_MENU_IDS.SORT_BY_MODEL) },
+        { type: 'separator' },
+        { id: CONVERSATION_LIST_MENU_IDS.SORT_ASCENDING, label: 'menu.conversation.sortAscending', type: 'radio', checked: false, click: () => conversationListMenuItemClick(CONVERSATION_LIST_MENU_IDS.SORT_ASCENDING) },
+        { id: CONVERSATION_LIST_MENU_IDS.SORT_DESCENDING, label: 'menu.conversation.sortDescending', type: 'radio', checked: false, click: () => conversationListMenuItemClick(CONVERSATION_LIST_MENU_IDS.SORT_DESCENDING) },
+      ]
+    },
+    {
+      id: CONVERSATION_LIST_MENU_IDS.BATCH_OPERATIONS,
+      label: 'menu.conversation.batchOperations',
+      click: () => conversationListMenuItemClick(CONVERSATION_LIST_MENU_IDS.BATCH_OPERATIONS)
+    }
+  ])
+}
+```
+
+渲染进程需要 配合
+
+api 定义比较简单就不写文档了
+
+ipc 通信比较杂 可以封装一个 utils 中的方法来做这件事
+```typescript
+// renderer/utils/contextMenu.ts
+export async function createContextMenu(menuId: MENU_IDS, cb?: (id: string) => void, dynamicOptions?: { label?: string, id: string, [key: string]: any }) {
+  let result:string = '';
+  window.api.contextMenuItemClick(menuId,id=>{
+    cb?.(id);
+    result = id;
+  })
+  await window.api.showContextMenu(menuId,JSON.stringify(dynamicOptions));
+  window.api.removeContextMenuListener(menuId);
+
+  return result;
+}
+```
+

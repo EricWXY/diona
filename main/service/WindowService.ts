@@ -8,6 +8,13 @@ import logManager from './LogService';
 import themeManager from './ThemeService';
 import path from 'node:path';
 
+
+interface WindowState {
+  instance: BrowserWindow | void;
+  isHidden: boolean;
+  onCreate: ((window: BrowserWindow) => void)[];
+  onClosed: ((window: BrowserWindow) => void)[];
+}
 interface SizeOptions {
   width: number; // 窗口宽度
   height: number; // 窗口高度
@@ -33,6 +40,10 @@ const SHARED_WINDOW_OPTIONS = {
 
 class WindowService {
   private static _instance: WindowService;
+
+  private _winStates: Record<WindowNames | string, WindowState> = {
+    main: { instance: void 0, isHidden: false, onCreate: [], onClosed: [] }
+  }
 
   private constructor() {
     this._setupIpcEvents();
@@ -77,6 +88,8 @@ class WindowService {
       ._setupWinLifecycle(window, name)
       ._loadWindowTemplate(window, name)
 
+    this._winStates[name].onCreate.forEach(callback => callback(window));
+
     return window;
   }
   private _setupWinLifecycle(window: BrowserWindow, name: WindowNames) {
@@ -84,6 +97,7 @@ class WindowService {
       && window?.webContents?.send(IPC_EVENTS.MAXIMIZE_WINDOW + 'back', window?.isMaximized()), 80);
     // win.on('')
     window.once('closed', () => {
+      this._winStates[name].onClosed.forEach(callback => callback(window));
       window?.destroy();
       window?.removeListener('resize', updateWinStatus);
       // this._winStates[name].instance = void 0;
@@ -110,6 +124,14 @@ class WindowService {
   public toggleMax(target: BrowserWindow | void | null) {
     if (!target) return;
     target.isMaximized() ? target.unmaximize() : target.maximize();
+  }
+
+  public onWindowCreate(name: WindowNames, callback: (window: BrowserWindow) => void) {
+    this._winStates[name].onCreate.push(callback);
+  }
+
+  public onWindowClosed(name: WindowNames, callback: (window: BrowserWindow) => void) {
+    this._winStates[name].onClosed.push(callback);
   }
 
 }

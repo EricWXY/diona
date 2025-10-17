@@ -1,15 +1,14 @@
 import { ipcMain, Menu, type MenuItemConstructorOptions } from 'electron';
 import { IPC_EVENTS } from '@common/constants';
 import { cloneDeep } from '@common/utils';
+import { createTranslator } from '../utils'
 import logManager from './LogService';
 
-// Menu.buildFromTemplate()
-
-let t = (val: string | undefined) => val
+let t: ReturnType<typeof createTranslator> = createTranslator();
 
 class MenuService {
   private static _instance: MenuService;
-  private _menuTemplate: Map<string, MenuItemConstructorOptions[]> = new Map();
+  private _menuTemplates: Map<string, MenuItemConstructorOptions[]> = new Map();
   private _currentMenu?: Menu = void 0;
 
   private constructor() {
@@ -25,9 +24,9 @@ class MenuService {
   private _setupLanguageChangeListener() {
     //  :todo
     // configManager.onConfigChange((config)=> {
-      // if(language changed)
+    // if(language changed)
 
-      // t = 
+    // t = 
     // })
   }
 
@@ -38,14 +37,14 @@ class MenuService {
   }
 
   public register(menuId: string, template: MenuItemConstructorOptions[]) {
-    this._menuTemplate.set(menuId, template);
+    this._menuTemplates.set(menuId, template);
     return menuId;
   }
 
   public showMenu(menuId: string, onClose?: () => void, dynamicOptions?: string) {
     if (this._currentMenu) return;
 
-    const template = cloneDeep(this._menuTemplate.get(menuId));
+    const template = cloneDeep(this._menuTemplates.get(menuId));
 
     if (!template) {
       logManager.warn(`Menu ${menuId} not found.`);
@@ -111,11 +110,11 @@ class MenuService {
   }
 
   public destroyMenu(menuId: string) {
-    this._menuTemplate.delete(menuId);
+    this._menuTemplates.delete(menuId);
   }
 
   public destroyed() {
-    this._menuTemplate.clear();
+    this._menuTemplates.clear();
     this._currentMenu = void 0;
   }
 }
