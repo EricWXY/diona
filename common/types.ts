@@ -2,6 +2,18 @@ import { WINDOW_NAMES } from './constants';
 
 export type WindowNames = `${WINDOW_NAMES}`;
 
+export interface Provider {
+  id: number;
+  name: string;
+  visible?: boolean;
+  title?: string;
+  type?: 'OpenAI';
+  openAISetting?: string;
+  createdAt: number;
+  updatedAt: number;
+  models: string[];
+}
+
 export interface Conversation {
   id: number;
   title: string;
@@ -24,3 +36,7 @@ export interface Message {
   conversationId: number;
 }
 
+export interface OpenAISetting {
+  baseURL?: string;
+  apiKey?: string;
+}
