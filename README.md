@@ -1365,7 +1365,7 @@ export default menuManager;
 # section_11
 
 - [x] 主进程国际化
-- [ ] 对话列表上下文菜单
+- [x] 对话列表上下文菜单
 
 
 > 主进程国际化(可以考虑第三方的 node 端的 i18n 库,这里需求比较简单就自己搓了)
@@ -1467,7 +1467,7 @@ api 定义比较简单就不写文档了
 ipc 通信比较杂 可以封装一个 utils 中的方法来做这件事
 ```typescript
 // renderer/utils/contextMenu.ts
-export async function createContextMenu(menuId: MENU_IDS, cb?: (id: string) => void, dynamicOptions?: { label?: string, id: string, [key: string]: any }) {
+export async function createContextMenu(menuId: MENU_IDS, cb?: (id: string) => void, dynamicOptions?: { label?: string, id: string, [key: string]: any }[]) {
   let result:string = '';
   window.api.contextMenuItemClick(menuId,id=>{
     cb?.(id);
@@ -1478,5 +1478,226 @@ export async function createContextMenu(menuId: MENU_IDS, cb?: (id: string) => v
 
   return result;
 }
+```
+
+--------------------------------------------------------
+
+# section_12
+
+- [x] 接入indexedDB(dexie)
+- [x] 实现对话列表的增删改查(pinia 作为媒介)
+
+数据库
+```typescript
+// renderer/dataBase.ts
+import type { Provider, Conversation, Message } from '@common/types';
+import Dexie, { type EntityTable } from 'dexie';
+import { stringifyOpenAISetting } from '@common/utils';
+import { logger } from './utils/logger';
+
+export const providers: Provider[] = [
+  {
+    id: 1,
+    name: 'bigmodel',
+    title: '智谱AI',
+    models: ['glm-4.5-flash'],
+    openAISetting: stringifyOpenAISetting({
+      baseURL: 'https://open.bigmodel.cn/api/paas/v4',
+      apiKey: '',
+    }),
+    createdAt: new Date().getTime(),
+    updatedAt: new Date().getTime()
+  },
+  {
+    id: 2,
+    name: 'deepseek',
+    title: '深度求索 (DeepSeek)',
+    models: ['deepseek-chat'],
+    openAISetting: stringifyOpenAISetting({
+      baseURL: 'https://api.deepseek.com/v1',
+      apiKey: '',
+    }),
+    createdAt: new Date().getTime(),
+    updatedAt: new Date().getTime()
+  },
+  {
+    id: 3,
+    name: 'siliconflow',
+    title: '硅基流动',
+    models: ['Qwen/Qwen3-8B', 'deepseek-ai/DeepSeek-R1-0528-Qwen3-8B'],
+    openAISetting: stringifyOpenAISetting({
+      baseURL: 'https://api.siliconflow.cn/v1',
+      apiKey: '',
+    }),
+    createdAt: new Date().getTime(),
+    updatedAt: new Date().getTime()
+  },
+  {
+    id: 4,
+    name: 'qianfan',
+    title: '百度千帆',
+    models: ['ernie-speed-128k', 'ernie-4.0-8k', 'ernie-3.5-8k'],
+    openAISetting: stringifyOpenAISetting({
+      baseURL: 'https://qianfan.baidubce.com/v2',
+      apiKey: '',
+    }),
+    createdAt: new Date().getTime(),
+    updatedAt: new Date().getTime()
+  },
+];
+
+
+export const dataBase = new Dexie('dionaDB') as Dexie & {
+  providers: EntityTable<Provider, 'id'>;
+  conversations: EntityTable<Conversation, 'id'>;
+  messages: EntityTable<Message, 'id'>;
+};
+
+dataBase.version(1).stores({
+  providers: '++id,name',
+  conversations: '++id,providerId',
+  messages: '++id,conversationId',
+})
+
+export async function initProviders() {
+  const count = await dataBase.providers.count();
+  if (count === 0) {
+    await dataBase.providers.bulkAdd(providers);
+    logger.info('Providers data initialized successfully.');
+  }
+}
+```
+
+```typescript
+// renderer/stores/conversations.ts
+import type { Conversation } from '@common/types';
+import { debounce } from '@common/utils';
+import { dataBase } from '../dataBase';
+
+type SortBy = 'updatedAt' | 'createAt' | 'name' | 'model'; // 排序字段类型
+type SortOrder = 'asc' | 'desc'; // 排序顺序类型
+
+const SORT_BY_KEY = 'conversation:sortBy';
+const SORT_ORDER_KEY = 'conversation:sortOrder';
+
+const saveSortMode = debounce(({ sortBy, sortOrder }: { sortBy: SortBy, sortOrder: SortOrder }) => {
+  localStorage.setItem(SORT_BY_KEY, sortBy);
+  localStorage.setItem(SORT_ORDER_KEY, sortOrder);
+}, 300);
+
+export const useConversationsStore = defineStore('conversations', () => {
+  // State
+  const conversations = ref<Conversation[]>([]);
+  const saveSortBy = localStorage.getItem(SORT_BY_KEY) as SortBy;
+  const saveSortOrder = localStorage.getItem(SORT_ORDER_KEY) as SortOrder;
+
+  const sortBy = ref<SortBy>(saveSortBy ?? 'createAt');
+  const sortOrder = ref<SortOrder>(saveSortOrder ?? 'desc');
+
+  // Getters
+  const allConversations = computed(() => conversations.value);
+
+  const sortMode = computed(() => ({
+    sortBy: sortBy.value,
+    sortOrder: sortOrder.value,
+  }))
+
+  // Actions
+  async function initialize() {
+    conversations.value = await dataBase.conversations.toArray();
+
+    // 清除无用的 message
+    const ids = conversations.value.map(item => item.id);
+    const msgs = await dataBase.messages.toArray();
+    const invalidId = msgs.filter(item => !ids.includes(item.conversationId)).map(item => item.id);
+    invalidId.length && dataBase.messages.where('id').anyOf(invalidId).delete();
+  }
+
+  function setSortMode(_sortBy: SortBy, _sortOrder: SortOrder) {
+    if (sortBy.value !== _sortBy)
+      sortBy.value = _sortBy;
+    if (sortOrder.value !== _sortOrder)
+      sortOrder.value = _sortOrder;
+  }
+
+  function getConversationById(id: number) {
+    return conversations.value.find(item => item.id === id) as Conversation | void;
+  }
+
+  async function addConversation(conversation: Omit<Conversation, 'id'>) {
+    const conversationWithPin = {
+      ...conversation,
+      pinned: conversation.pinned ?? false,
+    }
+
+    const conversationId = await dataBase.conversations.add(conversationWithPin);
+
+    conversations.value.push({
+      id: conversationId,
+      ...conversationWithPin,
+    });
+
+    return conversationId;
+  }
+
+  async function delConversation(id: number) {
+    await dataBase.messages.where('conversationId').equals(id).delete();
+    await dataBase.conversations.delete(id);
+    conversations.value = conversations.value.filter(item => item.id !== id);
+  }
+
+  async function updateConversation(conversation: Conversation, updateTime: boolean = true) {
+    const _newConversation = {
+      ...conversation,
+      updatedAt: updateTime ? Date.now() : conversation.updatedAt,
+    }
+
+    await dataBase.conversations.update(conversation.id, _newConversation);
+    conversations.value = conversations.value.map(item => item.id === conversation.id ? _newConversation : item);
+  }
+
+  async function pinConversation(id: number) {
+    const conversation = conversations.value.find(item => item.id === id);
+
+    if (!conversation) return;
+    await updateConversation({
+      ...conversation,
+      pinned: true,
+    }, false);
+  }
+
+  async function unpinConversation(id: number) {
+    const conversation = conversations.value.find(item => item.id === id);
+
+    if (!conversation) return;
+    await updateConversation({
+      ...conversation,
+      pinned: false,
+    }, false);
+  }
+
+  watch([() => sortBy.value, () => sortOrder.value], () => saveSortMode({ sortBy: sortBy.value, sortOrder: sortOrder.value }));
+
+  return {
+    // State
+    conversations,
+    sortBy,
+    sortOrder,
+
+    // Getters
+    allConversations,
+    sortMode,
+
+    // Actions
+    initialize,
+    setSortMode,
+    getConversationById,
+    addConversation,
+    delConversation,
+    updateConversation,
+    pinConversation,
+    unpinConversation,
+  }
+})
 ```
 
