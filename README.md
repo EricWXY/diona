@@ -1701,3 +1701,12 @@ export const useConversationsStore = defineStore('conversations', () => {
 })
 ```
 
+# section_13
+
+- [x] 模型选择组件
+- [x] 创建对话组件(renderless)
+
+> 内容比较杂,唯一知道注意的是 无渲染组件
+
+vue3 中的一个概念, 无渲染组件(renderless) , 简单来说就是只有逻辑功能没有渲染功能的组件. vue2 中也有类似的概念 叫抽象组件 . vue 官方自带的组件 keep-alive 就是这样的一个组件.
+
