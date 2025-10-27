@@ -12,6 +12,7 @@ const SortOrderIdMap = new Map([
   ['desc', CONVERSATION_LIST_MENU_IDS.SORT_DESCENDING],
   ['asc', CONVERSATION_LIST_MENU_IDS.SORT_ASCENDING],
 ])
+const isBatchOperate = ref(false);
 
 export function useContextMenu() {
   const router = useRouter();
@@ -20,7 +21,7 @@ export function useContextMenu() {
 
   const actionPolicy = new Map([
     [CONVERSATION_LIST_MENU_IDS.BATCH_OPERATIONS, () => {
-      console.log('batch operations');
+      isBatchOperate.value = !isBatchOperate.value;
     }],
     [CONVERSATION_LIST_MENU_IDS.NEW_CONVERSATION, () => {
       console.log('new conversation');
@@ -52,6 +53,7 @@ export function useContextMenu() {
   }
 
   return {
-    handle
+    handle,
+    isBatchOperate,
   }
 }

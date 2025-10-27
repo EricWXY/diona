@@ -1801,3 +1801,10 @@ export function useFilter() {
 }
 ```
 
+
+# section_15
+
+- [x] 对话标题重命名
+- [x] 批量操作
+
+> 内容较杂，详见视频 本期重点关注 两个维度的 checkbox 的数据交互
