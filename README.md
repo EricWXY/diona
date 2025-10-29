@@ -1808,3 +1808,10 @@ export function useFilter() {
 - [x] 批量操作
 
 > 内容较杂，详见视频 本期重点关注 两个维度的 checkbox 的数据交互
+
+# section_16
+
+- [x] WindowService 改造适配多窗口
+
+> 重点关注 假关闭窗口操作 和 loading视图
+

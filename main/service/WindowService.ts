@@ -1,7 +1,7 @@
 import type { WindowNames } from '@common/types';
 
-import { IPC_EVENTS } from '@common/constants';
-import { BrowserWindow, BrowserWindowConstructorOptions, ipcMain, IpcMainInvokeEvent, type IpcMainEvent } from 'electron';
+import { IPC_EVENTS, WINDOW_NAMES } from '@common/constants';
+import { BrowserWindow, BrowserWindowConstructorOptions, ipcMain, IpcMainInvokeEvent, WebContentsView, type IpcMainEvent } from 'electron';
 import { debounce } from '@common/utils';
 
 import logManager from './LogService';
@@ -26,6 +26,8 @@ interface SizeOptions {
 
 const SHARED_WINDOW_OPTIONS = {
   titleBarStyle: 'hidden',
+  opacity: 0,
+  show: false,
   title: 'Diona',
   darkTheme: themeManager.isDark,
   backgroundColor: themeManager.isDark ? '#2C2C2C' : '#FFFFFF',
@@ -42,7 +44,9 @@ class WindowService {
   private static _instance: WindowService;
 
   private _winStates: Record<WindowNames | string, WindowState> = {
-    main: { instance: void 0, isHidden: false, onCreate: [], onClosed: [] }
+    main: { instance: void 0, isHidden: false, onCreate: [], onClosed: [] },
+    setting: { instance: void 0, isHidden: false, onCreate: [], onClosed: [] },
+    dialog: { instance: void 0, isHidden: false, onCreate: [], onClosed: [] },
   }
 
   private constructor() {
@@ -50,9 +54,19 @@ class WindowService {
     logManager.info('WindowService initialized successfully.');
   }
 
+  private _isReallyClose(windowName: WindowNames | void) {
+    if (windowName === WINDOW_NAMES.MAIN) return true; // todo: 最小化托盘
+    if (windowName === WINDOW_NAMES.SETTING) return false;
+
+    return true;
+  }
+
   private _setupIpcEvents() {
     const handleCloseWindow = (e: IpcMainEvent) => {
-      this.close(BrowserWindow.fromWebContents(e.sender));
+      const target = BrowserWindow.fromWebContents(e.sender);
+      const winName = this.getName(target);
+
+      this.close(target, this._isReallyClose(winName));
     }
     const handleMinimizeWindow = (e: IpcMainEvent) => {
       BrowserWindow.fromWebContents(e.sender)?.minimize();
@@ -77,35 +91,108 @@ class WindowService {
     return this._instance;
   }
 
-  public create(name: WindowNames, size: SizeOptions) {
-    const window = new BrowserWindow({
-      ...SHARED_WINDOW_OPTIONS,
-      ...size,
-    })
+  public create(name: WindowNames, size: SizeOptions, moreOpts?: BrowserWindowConstructorOptions) {
+    if (this.get(name)) return;
+    const isHiddenWin = this._isHiddenWin(name);
+    let window = this._createWinInstance(name, moreOpts);
 
-    // this._loadWindowTemplate(window, name);
-    this
+    !isHiddenWin && this
       ._setupWinLifecycle(window, name)
       ._loadWindowTemplate(window, name)
 
-    this._winStates[name].onCreate.forEach(callback => callback(window));
+    this._listenWinReady({
+      win: window,
+      isHiddenWin,
+      size
+    })
+
+
+    if (!isHiddenWin) {
+      this._winStates[name].instance = window;
+      this._winStates[name].onCreate.forEach(callback => callback(window));
+    }
+
+    if (isHiddenWin) {
+      this._winStates[name].isHidden = false;
+      logManager.info(`Hidden window show: ${name}`)
+    }
 
     return window;
   }
   private _setupWinLifecycle(window: BrowserWindow, name: WindowNames) {
     const updateWinStatus = debounce(() => !window?.isDestroyed()
       && window?.webContents?.send(IPC_EVENTS.MAXIMIZE_WINDOW + 'back', window?.isMaximized()), 80);
-    // win.on('')
     window.once('closed', () => {
       this._winStates[name].onClosed.forEach(callback => callback(window));
       window?.destroy();
       window?.removeListener('resize', updateWinStatus);
-      // this._winStates[name].instance = void 0;
+      this._winStates[name].instance = void 0;
+      this._winStates[name].isHidden = false;
       logManager.info(`Window closed: ${name}`);
     });
     window.on('resize', updateWinStatus)
-    // this._loadWindowTemplate(win, name);
     return this;
+  }
+
+  private _listenWinReady(pararms: {
+    win: BrowserWindow,
+    isHiddenWin: boolean,
+    size: SizeOptions,
+  }) {
+    const onReady = () => {
+      pararms.win?.once('show', () => setTimeout(() => this._applySizeConstraints(pararms.win, pararms.size), 2));
+
+      pararms.win?.show();
+    }
+
+    if (!pararms.isHiddenWin) {
+      const loadingHandler = this._addLoadingView(pararms.win, pararms.size);
+      loadingHandler?.(onReady)
+    } else {
+      onReady();
+    }
+  }
+
+  private _addLoadingView(window: BrowserWindow, size: SizeOptions) {
+    let loadingView: WebContentsView | void = new WebContentsView();
+    let rendererIsReady = false;
+
+    window.contentView?.addChildView(loadingView);
+    loadingView.setBounds({
+      x: 0,
+      y: 0,
+      width: size.width,
+      height: size.height,
+    });
+    loadingView.webContents.loadFile(path.join(__dirname, 'loading.html'));
+
+    const onRendererIsReady = (e: IpcMainEvent) => {
+      if ((e.sender !== window?.webContents) || rendererIsReady) return;
+      rendererIsReady = true;
+      window.contentView.removeChildView(loadingView as WebContentsView);
+      ipcMain.removeListener(IPC_EVENTS.RENDERER_IS_READY, onRendererIsReady);
+      loadingView = void 0;
+    }
+    ipcMain.on(IPC_EVENTS.RENDERER_IS_READY, onRendererIsReady);
+
+    return (cb: () => void) => loadingView?.webContents.once('dom-ready', () => {
+      loadingView?.webContents.insertCSS(`body {
+          background-color: ${themeManager.isDark ? '#2C2C2C' : '#FFFFFF'} !important; 
+          --stop-color-start: ${themeManager.isDark ? '#A0A0A0' : '#7F7F7F'} !important;
+          --stop-color-end: ${themeManager.isDark ? '#A0A0A0' : '#7F7F7F'} !important;
+      }`);
+      cb();
+    })
+
+  }
+
+  private _applySizeConstraints(win: BrowserWindow, size: SizeOptions) {
+    if (size.maxHeight && size.maxWidth) {
+      win.setMaximumSize(size.maxWidth, size.maxHeight);
+    }
+    if (size.minHeight && size.minWidth) {
+      win.setMinimumSize(size.minWidth, size.minHeight);
+    }
   }
 
   private _loadWindowTemplate(window: BrowserWindow, name: WindowNames) {
@@ -116,14 +203,66 @@ class WindowService {
     window.loadFile(path.join(__dirname, `../renderer/${MAIN_WINDOW_VITE_NAME}/html/${name === 'main' ? 'index' : name}.html`));
   }
 
-  public close(target: BrowserWindow | void | null) {
+
+  private _handleCloseWindowState(target: BrowserWindow, really: boolean) {
+    const name = this.getName(target) as WindowNames;
+
+    if (name) {
+      if (!really) this._winStates[name].isHidden = true;
+      else this._winStates[name].instance = void 0;
+    }
+
+    setTimeout(() => {
+      target[really ? 'close' : 'hide']?.();
+      this._checkAndCloseAllWinodws();
+    }, 210)
+  }
+
+  private _checkAndCloseAllWinodws() {
+    if (!this._winStates[WINDOW_NAMES.MAIN].instance || this._winStates[WINDOW_NAMES.MAIN].instance?.isDestroyed())
+      return Object.values(this._winStates).forEach(win => win?.instance?.close());
+
+    const minimizeToTray = false; // todo : 从配置中读取
+    if (!minimizeToTray && !this.get(WINDOW_NAMES.MAIN)?.isVisible())
+      return Object.values(this._winStates).forEach(win => !win?.instance?.isVisible() && win?.instance?.close());
+  }
+
+  private _isHiddenWin(name: WindowNames) {
+    return this._winStates[name] && this._winStates[name].isHidden;
+  }
+
+  private _createWinInstance(name: WindowNames, opts?: BrowserWindowConstructorOptions) {
+    return this._isHiddenWin(name)
+      ? this._winStates[name].instance as BrowserWindow
+      : new BrowserWindow({
+        ...SHARED_WINDOW_OPTIONS,
+        ...opts,
+      });
+  }
+
+  public close(target: BrowserWindow | void | null, really: boolean = true) {
     if (!target) return;
-    target?.close();
+
+    const name = this.getName(target);
+    logManager.info(`Close window: ${name}, really: ${really}`);
+    this._handleCloseWindowState(target, really);
   }
 
   public toggleMax(target: BrowserWindow | void | null) {
     if (!target) return;
     target.isMaximized() ? target.unmaximize() : target.maximize();
+  }
+
+  public getName(target: BrowserWindow | null | void): WindowNames | void {
+    if (!target) return;
+    for (const [name, win] of Object.entries(this._winStates) as [WindowNames, { instance: BrowserWindow | void } | void][]) {
+      if (win?.instance === target) return name;
+    }
+  }
+
+  public get(name: WindowNames) {
+    if (this._winStates[name].isHidden) return void 0;
+    return this._winStates[name].instance;
   }
 
   public onWindowCreate(name: WindowNames, callback: (window: BrowserWindow) => void) {
