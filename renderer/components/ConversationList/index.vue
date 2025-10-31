@@ -5,6 +5,7 @@ import { CTX_KEY } from './constants';
 import { createContextMenu } from '@renderer/utils/contextMenu';
 import { useFilter } from './useFilter';
 import { useContextMenu } from './useContextMenu';
+import { useDialog } from '@renderer/hooks/useDialog';
 import { useConversationsStore } from '@renderer/stores/conversations';
 
 import SearchBar from './SearchBar.vue';
@@ -18,13 +19,26 @@ const props = defineProps<{ width: number }>();
 const editId = ref<number | void>();
 const checkedIds = ref<number[]>([]);
 
-const { conversations } = useFilter();
-const { handle: handleListContextMenu, isBatchOperate } = useContextMenu();
+const router = useRouter();
+const route = useRoute();
 const conversationsStore = useConversationsStore();
 
+const { conversations } = useFilter();
+const { createDialog } = useDialog();
+const { handle: handleListContextMenu, isBatchOperate } = useContextMenu();
+
+const currentId = computed(() => Number(route.params.id));
+
 const conversationItemActionPolicy = new Map([
-  [CONVERSATION_ITEM_MENU_IDS.DEL, async () => {
-    console.log('删除');
+  [CONVERSATION_ITEM_MENU_IDS.DEL, async (item: Conversation) => {
+    const res = await createDialog({
+      title: 'main.conversation.dialog.title',
+      content: 'main.conversation.dialog.content',
+    })
+    if (res === 'confirm') {
+      conversationsStore.delConversation(item.id);
+      item.id === currentId.value && router.push('/conversation');
+    }
   }],
   [CONVERSATION_ITEM_MENU_IDS.RENAME, async (item: Conversation) => {
     editId.value = item.id;
@@ -39,7 +53,17 @@ const conversationItemActionPolicy = new Map([
 ]);
 const batchActionPolicy = new Map([
   [CONVERSATION_ITEM_MENU_IDS.DEL, async () => {
-    // TODO
+    const res = await createDialog({
+      title: 'main.conversation.dialog.title',
+      content: 'main.conversation.dialog.content_1',
+    })
+    if (res !== 'confirm') return
+
+    if (checkedIds.value.includes(currentId.value)) {
+      router.push('/conversation');
+    }
+    checkedIds.value.forEach(id => conversationsStore.delConversation(id));
+    isBatchOperate.value = false;
   }],
   [CONVERSATION_ITEM_MENU_IDS.PIN, async () => {
     checkedIds.value.forEach(id => {
