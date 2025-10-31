@@ -8,7 +8,6 @@ import logManager from './LogService';
 import themeManager from './ThemeService';
 import path from 'node:path';
 
-
 interface WindowState {
   instance: BrowserWindow | void;
   isHidden: boolean;
@@ -26,7 +25,6 @@ interface SizeOptions {
 
 const SHARED_WINDOW_OPTIONS = {
   titleBarStyle: 'hidden',
-  opacity: 0,
   show: false,
   title: 'Diona',
   darkTheme: themeManager.isDark,
@@ -94,7 +92,7 @@ class WindowService {
   public create(name: WindowNames, size: SizeOptions, moreOpts?: BrowserWindowConstructorOptions) {
     if (this.get(name)) return;
     const isHiddenWin = this._isHiddenWin(name);
-    let window = this._createWinInstance(name, moreOpts);
+    let window = this._createWinInstance(name, { ...size, ...moreOpts });
 
     !isHiddenWin && this
       ._setupWinLifecycle(window, name)

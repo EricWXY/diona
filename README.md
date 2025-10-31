@@ -1815,3 +1815,127 @@ export function useFilter() {
 
 > 重点关注 假关闭窗口操作 和 loading视图
 
+# section_17
+
+- [x] Dialog 窗口
+
+## 主进程
+
+```typescript
+// main/wins/dialog.ts
+
+import { IPC_EVENTS, WINDOW_NAMES } from '@common/constants';
+import { BrowserWindow, ipcMain } from 'electron';
+import { windowManager } from '../service/WindowService';
+
+export function setupDialogWindow() {
+  let dialogWindow: BrowserWindow | void;
+  let params: CreateDialogProps | void;
+  let feedback: string | void
+
+  ipcMain.handle(WINDOW_NAMES.DIALOG + 'get-params',(e)=>{
+    if(BrowserWindow.fromWebContents(e.sender) !== dialogWindow) return
+    return {
+      winId: e.sender.id,
+      ...params
+    }
+  });
+
+  ['confirm','cancel'].forEach(_feedback => {
+    ipcMain.on(WINDOW_NAMES.DIALOG + _feedback,(e,winId:number)=> {
+      if(e.sender.id !== winId) return
+      feedback = _feedback;
+      windowManager.close(BrowserWindow.fromWebContents(e.sender));
+    });
+  });
+
+  ipcMain.handle(`${IPC_EVENTS.OPEN_WINDOW}:${WINDOW_NAMES.DIALOG}`, (e, _params) => {
+    params = _params;
+    dialogWindow = windowManager.create(
+      WINDOW_NAMES.DIALOG,
+      {
+        width: 350, height: 200,
+        minWidth: 350, minHeight: 200,
+        maxWidth: 400, maxHeight: 300,
+      },
+      {
+        parent: BrowserWindow.fromWebContents(e.sender) as BrowserWindow,
+        resizable: false
+      }
+    );
+
+    return new Promise<string | void>((resolve) => dialogWindow?.on('closed', () => {
+      resolve(feedback);
+      feedback = void 0;
+    }))
+  })
+
+}
+
+export default setupDialogWindow
+
+```
+
+三个步骤
+
+1.create 
+2.getParams
+3.feedback
+
+## 渲染进程
+
+```vue
+<script setup lang="ts">
+import type { Ref } from 'vue';
+import { NConfigProvider } from 'naive-ui';
+
+const { t } = useI18n();
+
+const params: Ref<CreateDialogProps> = ref({
+  title: '',
+  content: '',
+  confirmText: '',
+  cancelText: '',
+})
+
+window.api._dialogGetParams().then(res => params.value = res)
+
+function handleCancel() {
+  window.api._dialogFeedback('cancel', Number(params.value.winId));
+}
+function handleConfirm() {
+  window.api._dialogFeedback('confirm', Number(params.value.winId));
+}
+</script>
+
+<template>
+  <n-config-provider class="h-screen w-full flex flex-col">
+    <title-bar class="h-[30px]" :is-minimizable="false" :is-maximizable="false">
+      <drag-region class="p-3 text-sm font-bold text-tx-primary">
+        {{ t(params.title ?? '') }}
+      </drag-region>
+    </title-bar>
+    <p class="flex-auto p-5 text-sm text-tx-primary">
+      {{ t(params.content ?? '') }}
+    </p>
+
+    <div class="h-[40px] flex justify-end items-center gap-2 p-4 mb-[20px]">
+      <button
+        class="mr-1 px-4 py-1.5 cursor-pointer rounded-md text-sm text-tx-secondary hover:bg-input transition-colors"
+        @click="handleCancel">
+        {{ t(params.cancelText || 'dialog.cancel') }}
+      </button>
+      <button
+        class="px-4 py-1.5 cursor-pointer rounded-md text-sm text-tx-primary hover:bg-red-200 hover:text-red-300   transition-colors"
+        @click="handleConfirm">
+        {{ t(params.confirmText || 'dialog.confirm') }}
+      </button>
+    </div>
+
+  </n-config-provider>
+</template>
+```
+
+注意在渲染进程 可以用 一个 useDialog.ts 去包装一下避免直接调用 window.api 上的东西
+
+
