@@ -1939,3 +1939,10 @@ function handleConfirm() {
 注意在渲染进程 可以用 一个 useDialog.ts 去包装一下避免直接调用 window.api 上的东西
 
 
+# section_18
+
+对话列表细节功能
+
+- [x] Dialog 模态遮罩层
+- [x] 对话项目右键菜单动态文案
+
