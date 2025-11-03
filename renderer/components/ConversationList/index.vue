@@ -83,7 +83,7 @@ function handleBatchOperate(opId: CONVERSATION_ITEM_MENU_IDS) {
 }
 
 async function handleItemContextMenu(item: Conversation) {
-  const clickItem = await createContextMenu(MENU_IDS.CONVERSATION_ITEM, void 0) as CONVERSATION_ITEM_MENU_IDS;
+  const clickItem = await createContextMenu(MENU_IDS.CONVERSATION_ITEM, void 0, item.pinned ? [{ label: 'menu.conversation.unpinConversation', id: CONVERSATION_ITEM_MENU_IDS.PIN }] : void 0) as CONVERSATION_ITEM_MENU_IDS;
   const action = conversationItemActionPolicy.get(clickItem);
   action && await action?.(item);
 }
