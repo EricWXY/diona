@@ -88,6 +88,14 @@ async function handleItemContextMenu(item: Conversation) {
   action && await action?.(item);
 }
 
+function handleItemClick(item: Conversation) {
+  router.push(`/conversation/${item.id}`);
+}
+
+function handleClickOutItem() {
+  router.push('/conversation');
+}
+
 function updateTitle(id: number, title: string) {
   const target = conversationsStore.conversations.find(item => item.id === id);
   if (!target) return
@@ -111,13 +119,13 @@ provide(CTX_KEY, {
 
 <template>
   <div class="conversation-list px-2 pt-3 h-[100vh] flex flex-col" :style="{ width: 'calc(100% - 57px)' }"
-    @contextmenu.prevent.stop="handleListContextMenu">
+    @contextmenu.prevent.stop="handleListContextMenu" @click="handleClickOutItem">
     <search-bar class="mt-3" />
     <ul class="flex-auto overflow-auto">
       <template v-for="item in conversations" :key="item.id">
         <li v-if="item.type !== 'divider'"
           class="cursor-pointer p-2 mt-2 rounded-md hover:bg-input flex flex-col items-start gap-2"
-          @contextmenu.prevent.stop="handleItemContextMenu(item)">
+          @contextmenu.prevent.stop="handleItemContextMenu(item)" @click.stop="handleItemClick(item)">
           <list-item v-bind="item" @update-title="updateTitle" />
         </li>
         <li v-else class="divider my-2 h-px bg-input"></li>
