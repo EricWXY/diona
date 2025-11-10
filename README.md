@@ -1957,4 +1957,7 @@ function handleConfirm() {
 
 - [x] 消息列表组件
 
+# section_21
+
+- [x] MessageStore
 

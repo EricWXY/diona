@@ -2,10 +2,9 @@
 import type { SelectValue } from '@renderer/types';
 import { MAIN_WIN_SIZE } from '@common/constants';
 import { throttle } from '@common/utils';
-
+import { useMessagesStore } from '@renderer/stores/messages';
 
 import { messages } from '@renderer/testData';
-
 import ResizeDivider from '@renderer/components/ResizeDivider.vue';
 import MessageInput from '@renderer/components/MessageInput.vue';
 import MessageList from '@renderer/components/MessageList.vue';
@@ -22,6 +21,7 @@ const msgInputRef = useTemplateRef<{ selectedProvider: SelectValue }>('msgInputR
 const route = useRoute();
 const router = useRouter();
 
+const messagesStore = useMessagesStore();
 
 const providerId = computed(() => ((provider.value as string)?.split(':')[0] ?? ''));
 const selectedModel = computed(() => ((provider.value as string)?.split(':')[1] ?? ''));
@@ -51,6 +51,12 @@ window.onresize = throttle(async () => {
 onMounted(async () => {
   await nextTick();
   listHeight.value = window.innerHeight * listScale.value;
+});
+
+onBeforeRouteUpdate(async (to, from, next) => {
+  if (to.params.id === from.params.id) return next();
+  await messagesStore.initialize(Number(to.params.id));
+  next();
 });
 
 watch(() => listHeight.value, () => listScale.value = listHeight.value / window.innerHeight);
