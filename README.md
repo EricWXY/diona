@@ -1961,3 +1961,11 @@ function handleConfirm() {
 
 - [x] MessageStore
 
+# section_22
+
+- [x] 主进程大模型接入(主进程)
+
+> 今日重点关注 openai 的封装 ,以及异步迭代器的使用(流式数据 公式写法)
+
+
+

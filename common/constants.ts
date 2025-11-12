@@ -11,6 +11,7 @@ export enum IPC_EVENTS {
   RENDERER_IS_READY = 'renderer-ready',
   SHOW_CONTEXT_MENU = 'show-context-menu',
 
+  START_A_DIALOGUE = 'start-a-dialogue',
 
   LOG_DEBUG = 'log-debug',
   LOG_INFO = 'log-info',
