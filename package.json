@@ -5,7 +5,7 @@
   "description": "My Electron application description",
   "main": ".vite/build/index.js",
   "scripts": {
-    "start": "electron-forge start",
+    "start": "dotenv -e .env -- electron-forge start",
     "package": "electron-forge package",
     "make": "electron-forge make",
     "publish": "electron-forge publish"
@@ -41,6 +41,7 @@
   "dependencies": {
     "@vueuse/core": "^13.9.0",
     "dexie": "^4.2.0",
+    "dotenv-cli": "^11.0.0",
     "electron-log": "^5.4.3",
     "electron-squirrel-startup": "^1.0.1",
     "js-base64": "^3.7.8",

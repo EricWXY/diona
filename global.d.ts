@@ -59,6 +59,9 @@ interface WindowApi {
   _dialogFeedback: (val: 'cancel' | 'confirm', winId: number) => void;
   _dialogGetParams: () => Promise<CreateDialogProps>;
 
+  startADialogue: (params: CreateDialogueProps) => void;
+  onDialogueBack: (cb: (data: DialogueBackStream) => void, messageId: number) => () => void;
+
   logger: {
     debug: (message: string, ...meta?: any[]) => void;
     info: (message: string, ...meta?: any[]) => void;
