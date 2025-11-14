@@ -4,11 +4,13 @@ import { MAIN_WIN_SIZE } from '@common/constants';
 import { throttle } from '@common/utils';
 import { useMessagesStore } from '@renderer/stores/messages';
 
-import { messages } from '@renderer/testData';
+// import { messages } from '@renderer/testData';
 import ResizeDivider from '@renderer/components/ResizeDivider.vue';
 import MessageInput from '@renderer/components/MessageInput.vue';
 import MessageList from '@renderer/components/MessageList.vue';
 import CreateConversation from '@renderer/components/CreateConversation.vue';
+import { useConversationsStore } from '@renderer/stores/conversations';
+import { useProvidersStore } from '@renderer/stores/providers';
 
 const listHeight = ref(0);
 const listScale = ref(0.7);
@@ -22,6 +24,8 @@ const route = useRoute();
 const router = useRouter();
 
 const messagesStore = useMessagesStore();
+const conversationsStore = useConversationsStore();
+const providersStore = useProvidersStore();
 
 const providerId = computed(() => ((provider.value as string)?.split(':')[0] ?? ''));
 const selectedModel = computed(() => ((provider.value as string)?.split(':')[1] ?? ''));
@@ -33,11 +37,16 @@ async function handleCreateConversation(create: (title: string) => Promise<numbe
   afterCreateConversation(id, _message);
 }
 
-function afterCreateConversation(id: number, _firstMsg: string) {
+function afterCreateConversation(id: number, firstMsg: string) {
   if (!id) return;
   router.push(`/conversation/${id}`);
-  // TODO: 第一条消息
+  messagesStore.sendMessage({
+    type: 'question',
+    content: firstMsg,
+    conversationId: id,
+  })
   message.value = '';
+  // conversationsStore
 }
 
 window.onresize = throttle(async () => {
@@ -79,7 +88,7 @@ watch(() => listHeight.value, () => listScale.value = listHeight.value / window.
   </div>
   <div class="h-full flex flex-col" v-else>
     <div class="w-full min-h-0" :style="{ height: `${listHeight}px` }">
-      <message-list :messages="messages" />
+      <message-list :messages="messagesStore.messagesByConversationId(conversationId)" />
     </div>
     <div class="input-container bg-bubble-others flex-auto w-[calc(100% + 10px)] ml-[-5px] ">
       <resize-divider direction="horizontal" v-model:size="listHeight" :max-size="maxListHeight" :min-size="100" />
