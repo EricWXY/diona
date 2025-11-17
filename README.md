@@ -1973,5 +1973,12 @@ function handleConfirm() {
 
 > 今日重点关注 停止流式输出的设计，以及防止多条消息输出内容错乱的处理。
 
+# section_24
+
+- [x] MessageInput 状态管理
+  + Input 内容
+  + 模型
+  + 按钮状态
+
 
 

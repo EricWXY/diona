@@ -15,7 +15,7 @@ import { useProvidersStore } from '@renderer/stores/providers';
 const listHeight = ref(0);
 const listScale = ref(0.7);
 const maxListHeight = ref(window.innerHeight * 0.7);
-// const isStoping = ref(false);
+const isStoping = ref(false);
 const message = ref('');
 const provider = ref<SelectValue>();
 const msgInputRef = useTemplateRef<{ selectedProvider: SelectValue }>('msgInputRef');
@@ -30,6 +30,15 @@ const providersStore = useProvidersStore();
 const providerId = computed(() => ((provider.value as string)?.split(':')[0] ?? ''));
 const selectedModel = computed(() => ((provider.value as string)?.split(':')[1] ?? ''));
 const conversationId = computed(() => Number(route.params.id) as number | undefined);
+
+const messageInputStatus = computed(() => {
+  if (isStoping.value) return 'loading';
+  const messages = messagesStore.messagesByConversationId(conversationId.value as number);
+  const last = messages[messages.length - 1];
+  if (last?.status === 'streaming' && last?.content?.length === 0) return 'loading';
+  if (last?.status === 'loading' || last?.status === 'streaming') return last?.status;
+  return 'normal';
+})
 
 async function handleCreateConversation(create: (title: string) => Promise<number | void>, _message: string) {
   const id = await create(_message);
@@ -46,7 +55,40 @@ function afterCreateConversation(id: number, firstMsg: string) {
     conversationId: id,
   })
   message.value = '';
-  // conversationsStore
+  messagesStore.setMessageInputValue(id, '');
+}
+
+async function handleSendMessage() {
+  if (!conversationId.value) return;
+  const _conversationId = conversationId.value;
+  const content = messagesStore.messageInputValueById(_conversationId);
+  if (!content?.trim()?.length) return;
+  messagesStore.sendMessage({
+    type: 'question',
+    content,
+    conversationId: _conversationId,
+  })
+  messagesStore.setMessageInputValue(_conversationId, '');
+}
+
+const canUpdateConversationTime = ref(true);
+function handleProviderSelect() {
+  const current = conversationsStore.getConversationById(conversationId.value as number);
+  if (!conversationId.value || !current) return;
+  conversationsStore.updateConversation({
+    ...current,
+    providerId: Number(providerId.value),
+    selectedModel: selectedModel.value,
+  }, canUpdateConversationTime.value)
+}
+
+async function handleStopMessage() {
+  isStoping.value = true;
+  const msgIds = messagesStore.loadingMsgIdsByConversationId(conversationId.value as number ?? -1);
+  for (const id of msgIds) {
+    messagesStore.stopMessage(id);
+  }
+  isStoping.value = false;
 }
 
 window.onresize = throttle(async () => {
@@ -70,6 +112,23 @@ onBeforeRouteUpdate(async (to, from, next) => {
 
 watch(() => listHeight.value, () => listScale.value = listHeight.value / window.innerHeight);
 
+watch([() => conversationId.value, () => msgInputRef.value], async ([id, msgInput]) => {
+  if (!msgInput || !id) {
+    // TODO: 默认模型
+    return;
+  }
+
+  const current = conversationsStore.getConversationById(id);
+  if (!current) return;
+
+  canUpdateConversationTime.value = false;
+  msgInput.selectedProvider = `${current.providerId}:${current.selectedModel}`;
+  await nextTick();
+  canUpdateConversationTime.value = true;
+
+  message.value = '';
+});
+
 </script>
 <template>
   <div class="h-full " v-if="!conversationId">
@@ -90,9 +149,13 @@ watch(() => listHeight.value, () => listScale.value = listHeight.value / window.
     <div class="w-full min-h-0" :style="{ height: `${listHeight}px` }">
       <message-list :messages="messagesStore.messagesByConversationId(conversationId)" />
     </div>
-    <div class="input-container bg-bubble-others flex-auto w-[calc(100% + 10px)] ml-[-5px] ">
+    <div class="input-container bg-bubble-others flex-auto w-full">
       <resize-divider direction="horizontal" v-model:size="listHeight" :max-size="maxListHeight" :min-size="100" />
-      <message-input v-model:provider="provider" :placeholder="$t('main.conversation.placeholder')" />
+      <message-input class="p-2 pt-0" ref="msgInputRef"
+        :message="messagesStore.messageInputValueById(conversationId ?? -1)" v-model:provider="provider"
+        :placeholder="$t('main.conversation.placeholder')" :status="messageInputStatus"
+        @update:message="messagesStore.setMessageInputValue(conversationId ?? -1, $event)" @send="handleSendMessage"
+        @select="handleProviderSelect" @stop="handleStopMessage" />
     </div>
   </div>
 </template>
