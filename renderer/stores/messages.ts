@@ -8,6 +8,8 @@ import { dataBase } from '../dataBase';
 import { useConversationsStore } from './conversations';
 import { useProvidersStore } from './providers';
 
+import i18n from '../i18n';
+
 const msgContentMap = new Map<number, string>();
 export const stopMethods = new Map<number, () => void>();
 
@@ -19,9 +21,14 @@ export const useMessagesStore = defineStore('messages', () => {
   // States
   const messages = ref<Message[]>([]);
 
+  const messagesInputValue = ref(new Map());
+
   // Getters
   const allMessages = computed(() => messages.value);
+  const messageInputValueById = computed(() => (conversationId: number) => messagesInputValue.value.get(conversationId) ?? '');
   const messagesByConversationId = computed(() => (conversationId: number) => messages.value.filter(message => message.conversationId === conversationId).sort((a, b) => a.createdAt - b.createdAt));
+  const loadingMsgIdsByConversationId = computed(() => (conversationId: number) => messagesByConversationId.value(conversationId).filter(message => message.status === 'loading' || message.status === 'streaming').map(message => message.id));
+
 
   // Actions
   async function initialize(conversationId: number) {
@@ -33,6 +40,10 @@ export const useMessagesStore = defineStore('messages', () => {
 
     const saved = await dataBase.messages.where({ conversationId }).toArray();
     messages.value = uniqueByKey([...messages.value, ...saved], 'id');
+  }
+
+  function setMessageInputValue(conversationId: number, value: string) {
+    messagesInputValue.value.set(conversationId, value);
   }
 
   const _updateConversation = async (conversationId: number) => {
@@ -110,6 +121,21 @@ export const useMessagesStore = defineStore('messages', () => {
     return loadingMsgId;
   }
 
+  async function stopMessage(id: number, update: boolean = true) {
+    const stop = stopMethods.get(id);
+    stop && stop?.();
+    if (update) {
+      const msgContent = messages.value.find(message => message.id === id)?.content || '';
+      await updateMessage(id, {
+        status: 'success',
+        updatedAt: Date.now(),
+        content: msgContent ? msgContent + i18n.global.t('main.message.stoppedGeneration') : void 0,
+      })
+    }
+
+    stopMethods.delete(id);
+  }
+
   async function updateMessage(id: number, updates: Partial<Message>) {
     let currentMsg = cloneDeep(messages.value.find(message => message.id === id));
     await dataBase.messages.update(id, { ...currentMsg, ...updates });
@@ -118,7 +144,7 @@ export const useMessagesStore = defineStore('messages', () => {
 
   async function deleteMessage(id: number) {
     let currentMsg = cloneDeep(messages.value.find(item => item.id === id));
-    //TODO: stopMessage(id, false);
+    stopMessage(id, false);
     await dataBase.messages.delete(id);
     currentMsg && _updateConversation(currentMsg.conversationId);
     // 从响应式数组中移除
@@ -130,10 +156,14 @@ export const useMessagesStore = defineStore('messages', () => {
     messages,
     allMessages,
     messagesByConversationId,
+    messageInputValueById,
+    loadingMsgIdsByConversationId,
     initialize,
+    setMessageInputValue,
     addMessage,
     sendMessage,
     updateMessage,
     deleteMessage,
+    stopMessage,
   }
 });
