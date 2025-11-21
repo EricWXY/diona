@@ -1985,4 +1985,20 @@ function handleConfirm() {
 - [x] useTimeAgo 时间格式化
 - [x] 滚动到最后一条消息
 
+# section_26
+
+- [x] MessageRender 组件
+
+> 安装依赖
+
+```
+npm i vue-markdown-render@2.3.0
+```  
+
+> 本期值得关注的点
+
+- vue-markdown-render 调用
+- 伪元素实现光标以及闪烁
+- 伪元素 class 的添加以及移除时机（vue-markdown-render 渲染完成后 利用 nextTick 获取目标元素）
+
 
