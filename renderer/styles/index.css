@@ -1,5 +1,6 @@
 @import "tailwindcss";
 @import "./theme/index.css";
+@plugin "@tailwindcss/typography";
 
 * {
   user-select: none;
