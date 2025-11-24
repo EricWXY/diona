@@ -2001,4 +2001,24 @@ npm i vue-markdown-render@2.3.0
 - 伪元素实现光标以及闪烁
 - 伪元素 class 的添加以及移除时机（vue-markdown-render 渲染完成后 利用 nextTick 获取目标元素）
 
+# section_27
 
+- [x] markdown 内容排版
+
+> 安装依赖
+
+```
+npm i -D @tailwindcss/typography@0.5.17 
+npm i markdown-it-highlightjs@4.2.0
+```  
+
+## 排版
+
+- 引入 @tailwindcss/typography 插件
+- 编写 自定义 prose 类
+
+## 高亮
+
+- 引入 markdown-it-highlightjs 插件
+- 引入合适的主题样式
+- 注册 highlight.js 未识别的语言包
