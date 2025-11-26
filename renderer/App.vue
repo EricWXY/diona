@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { NConfigProvider } from 'naive-ui';
+import { NConfigProvider, NMessageProvider } from 'naive-ui';
 import { initProviders } from './dataBase';
 import { useProvidersStore } from './stores/providers';
 import { useConversationsStore } from './stores/conversations';
@@ -21,16 +21,18 @@ onMounted(async () => {
 </script>
 <template>
   <n-config-provider class="h-full w-[100vw] flex text-tx-primary">
-    <aside class="sidebar h-full flex flex-shrink-0 flex-col" :style="{ width: sidebarWidth + 'px' }">
-      <div class="flex-auto flex">
-        <nav-bar />
-        <conversation-list class="flex-auto" :width="sidebarWidth" />
+    <n-message-provider>
+      <aside class="sidebar h-full flex flex-shrink-0 flex-col" :style="{ width: sidebarWidth + 'px' }">
+        <div class="flex-auto flex">
+          <nav-bar />
+          <conversation-list class="flex-auto" :width="sidebarWidth" />
+        </div>
+      </aside>
+      <resize-divider direction="vertical" v-model:size="sidebarWidth" :max-size="800" :min-size="320" />
+      <div class="flex-auto">
+        <router-view />
       </div>
-    </aside>
-    <resize-divider direction="vertical" v-model:size="sidebarWidth" :max-size="800" :min-size="320" />
-    <div class="flex-auto">
-      <router-view />
-    </div>
+    </n-message-provider>
   </n-config-provider>
 </template>
 
