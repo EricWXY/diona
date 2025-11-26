@@ -19,11 +19,11 @@ const _findLastElement = (target: HTMLElement): Element | void => {
   if (!target) return;
   let lastElement: Element | void = target.lastElementChild ?? target;
 
-  // TODO: PRE(代码块 hljs)
+  if (lastElement && lastElement.tagName === 'PRE')
+    lastElement = lastElement.getElementsByClassName('hljs')[0] ?? lastElement
 
-  if (lastElement && isList(lastElement)) {
+  if (lastElement && isList(lastElement)) 
     lastElement = _findLastElement(lastElement as HTMLElement);
-  }
 
   if (lastElement && lastElement.tagName === 'LI') {
     const _uls = lastElement.getElementsByTagName('ul');

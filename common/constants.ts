@@ -62,3 +62,9 @@ export enum CONVERSATION_LIST_MENU_IDS {
   SORT_DESCENDING = 'sortDescending',
   BATCH_OPERATIONS = 'batchOperations',
 }
+
+export enum MESSAGE_ITEM_MENU_IDS {
+  COPY = 'copy',
+  DELETE = 'delete',
+  SELECT = 'select',
+}

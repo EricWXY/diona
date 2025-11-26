@@ -1,6 +1,6 @@
 import type { BrowserWindow } from 'electron';
 import { ipcMain } from 'electron';
-import { WINDOW_NAMES, MAIN_WIN_SIZE, IPC_EVENTS, MENU_IDS, CONVERSATION_ITEM_MENU_IDS, CONVERSATION_LIST_MENU_IDS } from '@common/constants';
+import { WINDOW_NAMES, MAIN_WIN_SIZE, IPC_EVENTS, MENU_IDS, CONVERSATION_ITEM_MENU_IDS, CONVERSATION_LIST_MENU_IDS,MESSAGE_ITEM_MENU_IDS } from '@common/constants';
 import { createProvider } from '../providers';
 import { windowManager } from '../service/WindowService';
 import { menuManager } from '../service/MenuService';
@@ -60,6 +60,30 @@ const registerMenus = (window: BrowserWindow) => {
       click: () => conversationListMenuItemClick(CONVERSATION_LIST_MENU_IDS.BATCH_OPERATIONS)
     }
   ])
+
+  const messageItemMenuItemClick = (id: string) => {
+    logManager.logUserOperation(`${IPC_EVENTS.SHOW_CONTEXT_MENU}:${MENU_IDS.MESSAGE_ITEM}-${id}`)
+    window.webContents.send(`${IPC_EVENTS.SHOW_CONTEXT_MENU}:${MENU_IDS.MESSAGE_ITEM}`, id);
+  }
+  
+  menuManager.register(MENU_IDS.MESSAGE_ITEM, [
+    {
+      id: MESSAGE_ITEM_MENU_IDS.COPY,
+      label: 'menu.message.copyMessage',
+      click: () => messageItemMenuItemClick(MESSAGE_ITEM_MENU_IDS.COPY)
+    },
+    {
+      id: MESSAGE_ITEM_MENU_IDS.SELECT,
+      label: 'menu.message.selectMessage',
+      click: () => messageItemMenuItemClick(MESSAGE_ITEM_MENU_IDS.SELECT)
+    },
+    { type: 'separator' },
+    {
+      id: MESSAGE_ITEM_MENU_IDS.DELETE,
+      label: 'menu.message.deleteMessage',
+      click: () => messageItemMenuItemClick(MESSAGE_ITEM_MENU_IDS.DELETE)
+    },
+  ])
 }
 
 export function setupMainWindow() {
@@ -81,7 +105,7 @@ export function setupMainWindow() {
       const provider = createProvider(providerName);
       const chunks = await provider?.chat(messages, selectedModel);
 
-      if(!chunks){
+      if (!chunks) {
         throw new Error('chunks or stream not found');
       }
 
