@@ -8,6 +8,9 @@ export enum IPC_EVENTS {
   SET_THEME_MODE = 'set-theme-mode',
   GET_THEME_MODE = 'get-theme-mode',
   IS_DARK_THEME = 'is-dark-theme',
+  SET_CONFIG = 'set-config',
+  GET_CONFIG = 'get-config',
+  UPDATE_CONFIG = 'update-config',
   RENDERER_IS_READY = 'renderer-ready',
   SHOW_CONTEXT_MENU = 'show-context-menu',
 
@@ -22,6 +25,7 @@ export enum IPC_EVENTS {
 
   // main to renderer
   THEME_MODE_UPDATED = 'theme-mode-updated',
+  CONFIG_UPDATED = 'config-updated',
 }
 
 
@@ -29,6 +33,16 @@ export enum WINDOW_NAMES {
   MAIN = 'main',
   SETTING = 'setting',
   DIALOG = 'dialog',
+}
+
+export enum CONFIG_KEYS {
+  THEME_MODE = 'themeMode',
+  PRIMARY_COLOR = 'primaryColor',
+  LANGUAGE = 'language',
+  FONT_SIZE = 'fontSize',
+  MINIMIZE_TO_TRAY = 'minimizeToTray',
+  PROVIDER = 'provider',
+  DEFAULT_MODEL = 'defaultModel',
 }
 
 
