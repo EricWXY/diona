@@ -2159,3 +2159,10 @@ export const configManager = ConfigService.getInstance();
 export default configManager;
 
 ```
+
+
+# section_30
+
+- [x] ConfigService 嵌入其他的 Service 中
+
+

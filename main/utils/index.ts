@@ -1,4 +1,6 @@
 import logManager from '../service/LogService';
+import configManager from '../service/ConfigService';
+import { CONFIG_KEYS } from '@common/constants';
 
 import en from '@locales/en.json';
 import zh from '@locales/zh.json';
@@ -11,7 +13,7 @@ export function createTranslator() {
     if (!key) return void 0;
     try {
       const keys = key?.split('.');
-      let result: any = messages['zh'];
+      let result: any = messages[configManager.get(CONFIG_KEYS.LANGUAGE)];
       for (const _key of keys) {
         result = result[_key];
       }
