@@ -1,10 +1,12 @@
 import type { BrowserWindow } from 'electron';
 import { ipcMain } from 'electron';
-import { WINDOW_NAMES, MAIN_WIN_SIZE, IPC_EVENTS, MENU_IDS, CONVERSATION_ITEM_MENU_IDS, CONVERSATION_LIST_MENU_IDS,MESSAGE_ITEM_MENU_IDS } from '@common/constants';
+import { WINDOW_NAMES, MAIN_WIN_SIZE, IPC_EVENTS, MENU_IDS, CONVERSATION_ITEM_MENU_IDS, CONVERSATION_LIST_MENU_IDS,MESSAGE_ITEM_MENU_IDS,CONFIG_KEYS } from '@common/constants';
 import { createProvider } from '../providers';
 import { windowManager } from '../service/WindowService';
 import { menuManager } from '../service/MenuService';
 import { logManager } from '../service/LogService';
+import { configManager } from '../service/ConfigService';
+import { config } from 'process';
 
 const registerMenus = (window: BrowserWindow) => {
 
@@ -88,6 +90,13 @@ const registerMenus = (window: BrowserWindow) => {
 
 export function setupMainWindow() {
   windowManager.onWindowCreate(WINDOW_NAMES.MAIN, (mainWindow) => {
+    let minimizeToTray = configManager.get(CONFIG_KEYS.MINIMIZE_TO_TRAY);
+    configManager.onConfigChange((config)=>{
+      if(minimizeToTray === config[CONFIG_KEYS.MINIMIZE_TO_TRAY]) return;
+      minimizeToTray = config[CONFIG_KEYS.MINIMIZE_TO_TRAY];
+      // TODO: 配置变化， 触发 最小化托盘服务的 初始化
+    })
+
     registerMenus(mainWindow);
   });
   windowManager.create(WINDOW_NAMES.MAIN, MAIN_WIN_SIZE);
