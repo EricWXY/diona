@@ -1,6 +1,8 @@
+import { CONFIG_KEYS } from '@common/constants';
 import logManager from '../service/LogService';
 import configManager from '../service/ConfigService';
-import { CONFIG_KEYS } from '@common/constants';
+import path from 'node:path';
+
 
 import en from '@locales/en.json';
 import zh from '@locales/zh.json';
@@ -23,4 +25,13 @@ export function createTranslator() {
       return key
     }
   }
+}
+
+let logo: string | void = void 0;
+export function createLogo() {
+  if (logo != null) {
+    return logo;
+  }
+  logo = path.join(__dirname, 'logo.ico');
+  return logo;
 }

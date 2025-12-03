@@ -1,12 +1,20 @@
 import type { BrowserWindow } from 'electron';
 import { ipcMain } from 'electron';
-import { WINDOW_NAMES, MAIN_WIN_SIZE, IPC_EVENTS, MENU_IDS, CONVERSATION_ITEM_MENU_IDS, CONVERSATION_LIST_MENU_IDS,MESSAGE_ITEM_MENU_IDS,CONFIG_KEYS } from '@common/constants';
+import { WINDOW_NAMES, MAIN_WIN_SIZE, IPC_EVENTS, MENU_IDS, CONVERSATION_ITEM_MENU_IDS, CONVERSATION_LIST_MENU_IDS, MESSAGE_ITEM_MENU_IDS, CONFIG_KEYS } from '@common/constants';
 import { createProvider } from '../providers';
 import { windowManager } from '../service/WindowService';
 import { menuManager } from '../service/MenuService';
 import { logManager } from '../service/LogService';
 import { configManager } from '../service/ConfigService';
-import { config } from 'process';
+import { trayManager } from '../service/TrayService';
+
+const handleTray = (minimizeToTray: boolean) => {
+  if (minimizeToTray) {
+    trayManager.create();
+    return;
+  }
+  trayManager.destroy();
+}
 
 const registerMenus = (window: BrowserWindow) => {
 
@@ -67,7 +75,7 @@ const registerMenus = (window: BrowserWindow) => {
     logManager.logUserOperation(`${IPC_EVENTS.SHOW_CONTEXT_MENU}:${MENU_IDS.MESSAGE_ITEM}-${id}`)
     window.webContents.send(`${IPC_EVENTS.SHOW_CONTEXT_MENU}:${MENU_IDS.MESSAGE_ITEM}`, id);
   }
-  
+
   menuManager.register(MENU_IDS.MESSAGE_ITEM, [
     {
       id: MESSAGE_ITEM_MENU_IDS.COPY,
@@ -91,12 +99,12 @@ const registerMenus = (window: BrowserWindow) => {
 export function setupMainWindow() {
   windowManager.onWindowCreate(WINDOW_NAMES.MAIN, (mainWindow) => {
     let minimizeToTray = configManager.get(CONFIG_KEYS.MINIMIZE_TO_TRAY);
-    configManager.onConfigChange((config)=>{
-      if(minimizeToTray === config[CONFIG_KEYS.MINIMIZE_TO_TRAY]) return;
+    configManager.onConfigChange((config) => {
+      if (minimizeToTray === config[CONFIG_KEYS.MINIMIZE_TO_TRAY]) return;
       minimizeToTray = config[CONFIG_KEYS.MINIMIZE_TO_TRAY];
-      // TODO: 配置变化， 触发 最小化托盘服务的 初始化
-    })
-
+      handleTray(minimizeToTray);
+    });
+    handleTray(minimizeToTray);
     registerMenus(mainWindow);
   });
   windowManager.create(WINDOW_NAMES.MAIN, MAIN_WIN_SIZE);
