@@ -2165,4 +2165,7 @@ export default configManager;
 
 - [x] ConfigService 嵌入其他的 Service 中
 
+# section_31
+
+- [x] TrayService 托盘服务
 
