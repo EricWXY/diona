@@ -2169,3 +2169,6 @@ export default configManager;
 
 - [x] TrayService 托盘服务
 
+# section_32
+
+- [x] 引入 setting 窗口(多窗口机制的一次小回顾)

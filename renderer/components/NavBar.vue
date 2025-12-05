@@ -1,5 +1,7 @@
 <script setup lang="ts">
+import { WINDOW_NAMES } from '@common/constants';
 import { Icon as IconifyIcon } from '@iconify/vue';
+import { openWindow } from '@renderer/utils/system';
 import DragRegion from './DragRegion.vue';
 import ThemeSwitcher from './ThemeSwitcher.vue';
 import NativeTooltip from './NativeTooltip.vue';
@@ -7,6 +9,10 @@ import NativeTooltip from './NativeTooltip.vue';
 defineOptions({ name: 'NavBar' });
 
 const { t } = useI18n();
+
+function openSettingWindow() {
+  openWindow(WINDOW_NAMES.SETTING);
+}
 </script>
 
 <template>
@@ -24,7 +30,7 @@ const { t } = useI18n();
         <li class="sidebar-item no-drag cursor-pointer hover:text-primary-subtle">
           <theme-switcher />
         </li>
-        <li class="sidebar-item no-drag cursor-pointer hover:text-primary-subtle">
+        <li class="sidebar-item no-drag cursor-pointer hover:text-primary-subtle" @click="openSettingWindow">
           <native-tooltip :content="t('main.sidebar.settings')">
             <iconify-icon icon="material-symbols:settings-outline" width="24" height="24" />
           </native-tooltip>

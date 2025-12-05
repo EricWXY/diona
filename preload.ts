@@ -4,6 +4,8 @@ import { contextBridge, ipcRenderer } from 'electron';
 import { IPC_EVENTS, WINDOW_NAMES } from '@common/constants';
 
 const api: WindowApi = {
+
+  openWindow: (name: WindowNames) => ipcRenderer.send(`${IPC_EVENTS.OPEN_WINDOW}:${name}`),
   closeWindow: () => ipcRenderer.send(IPC_EVENTS.CLOSE_WINDOW),
   minimizeWindow: () => ipcRenderer.send(IPC_EVENTS.MINIMIZE_WINDOW),
   maximizeWindow: () => ipcRenderer.send(IPC_EVENTS.MAXIMIZE_WINDOW),

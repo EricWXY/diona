@@ -3,6 +3,7 @@ import type { WindowNames } from '@common/types';
 import { CONFIG_KEYS, IPC_EVENTS, WINDOW_NAMES } from '@common/constants';
 import { BrowserWindow, BrowserWindowConstructorOptions, ipcMain, IpcMainInvokeEvent, WebContentsView, type IpcMainEvent } from 'electron';
 import { debounce } from '@common/utils';
+import { createLogo } from '../utils';
 
 import logManager from './LogService';
 import configManager from './ConfigService';
@@ -41,6 +42,7 @@ const SHARED_WINDOW_OPTIONS = {
 
 class WindowService {
   private static _instance: WindowService;
+  private _logo = createLogo();
 
   private _winStates: Record<WindowNames | string, WindowState> = {
     main: { instance: void 0, isHidden: false, onCreate: [], onClosed: [] },
@@ -235,8 +237,22 @@ class WindowService {
       ? this._winStates[name].instance as BrowserWindow
       : new BrowserWindow({
         ...SHARED_WINDOW_OPTIONS,
+        icon: this._logo,
         ...opts,
       });
+  }
+
+  public focus(target: BrowserWindow | void | null) {
+    if (!target) return;
+    const name = this.getName(target);
+    if (target?.isMaximized()) {
+      target?.restore();
+      logManager.debug(`Window ${name} restored and focused`);
+    } else {
+      logManager.debug(`Window ${name} focused`);
+    }
+
+    target?.focus();
   }
 
   public close(target: BrowserWindow | void | null, really: boolean = true) {
