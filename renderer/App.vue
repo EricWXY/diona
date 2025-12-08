@@ -7,10 +7,13 @@ import { logger } from './utils/logger';
 import NavBar from '@renderer/components/NavBar.vue';
 import ResizeDivider from '@renderer/components/ResizeDivider.vue';
 import ConversationList from '@renderer/components/ConversationList/index.vue';
+import { useConfig } from '@renderer/hooks/useConfig';
 
 const sidebarWidth = ref(320);
 const { initialize: initializeProvidersStore } = useProvidersStore();
 const { initialize: initializeConversationsStore } = useConversationsStore();
+
+useConfig();
 
 onMounted(async () => {
   await initProviders();

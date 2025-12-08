@@ -1,3 +1,5 @@
+import { useConfig } from './useConfig';
+import { CONFIG_KEYS } from '@common/constants';
 
 const iconMap = new Map([
   ['system', 'material-symbols:auto-awesome-outline'],
@@ -13,12 +15,13 @@ export function useThemeMode() {
   const themeMode = ref<ThemeMode>('dark');
   const isDark = ref<boolean>(false);
 
-  const {t} = useI18n();
+  const { t } = useI18n();
 
   const themeIcon = computed(() => iconMap.get(themeMode.value) || 'material-symbols:auto-awesome-outline');
   const themeTooltip = computed(() => t(tooltipMap.get(themeMode.value) || 'settings.theme.system'));
 
   const themeChangeCallbacks: Array<(mode: ThemeMode) => void> = [];
+  const config = useConfig();
 
   function setThemeMode(mode: ThemeMode) {
     themeMode.value = mode;
@@ -31,6 +34,10 @@ export function useThemeMode() {
   function onThemeChange(callback: (mode: ThemeMode) => void) {
     themeChangeCallbacks.push(callback);
   }
+
+  watch(() => config[CONFIG_KEYS.THEME_MODE], (mode) => {
+    (themeMode.value !== mode) && setThemeMode(mode);
+  });
 
   onMounted(async () => {
     window.api.onSystemThemeChange((_isDark) => window.api.getThemeMode().then(res => {
