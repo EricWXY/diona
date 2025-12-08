@@ -58,6 +58,12 @@ interface WindowApi {
 
   viewIsReady: () => void;
 
+  getConfig: (key: string) => Promise<any>;
+  setConfig: (key: string, value: any) => void;
+  updateConfig: (value: any) => void;
+  onConfigChange: (callback: (conifg: any) => void) => () => void;
+  removeConfigChangeListener: (cb: (config: any) => void) => void;
+
   createDialog: (params: CreateDialogProps) => Promise<string>;
   _dialogFeedback: (val: 'cancel' | 'confirm', winId: number) => void;
   _dialogGetParams: () => Promise<CreateDialogProps>;

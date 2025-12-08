@@ -2172,3 +2172,8 @@ export default configManager;
 # section_32
 
 - [x] 引入 setting 窗口(多窗口机制的一次小回顾)
+
+# section_33
+
+- [x] 开发基础配置界面
+- [x] 配置界面与 ConfigService 交互(useConfig)

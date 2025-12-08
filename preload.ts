@@ -23,6 +23,18 @@ const api: WindowApi = {
 
   viewIsReady: () => ipcRenderer.send(IPC_EVENTS.RENDERER_IS_READY),
 
+  getConfig: (key: string) => ipcRenderer.invoke(IPC_EVENTS.GET_CONFIG, key),
+  setConfig: (key: string, value: any) => ipcRenderer.send(IPC_EVENTS.SET_CONFIG, key, value),
+  updateConfig: (value: any) => ipcRenderer.send(IPC_EVENTS.UPDATE_CONFIG, value),
+
+  onConfigChange: (callback: (config: any) => void) => {
+    ipcRenderer.on(IPC_EVENTS.CONFIG_UPDATED, (_, config) => callback(config));
+    return () => ipcRenderer.removeListener(IPC_EVENTS.CONFIG_UPDATED, callback);
+  },
+
+  removeConfigChangeListener: (cb: (config: any) => void) => ipcRenderer.removeListener(IPC_EVENTS.CONFIG_UPDATED, cb),
+
+
   createDialog: (params: CreateDialogProps) => new Promise(async (resolve) => {
     const feedback = await ipcRenderer.invoke(`${IPC_EVENTS.OPEN_WINDOW}:${WINDOW_NAMES.DIALOG}`, {
       title: params.title ?? '',
