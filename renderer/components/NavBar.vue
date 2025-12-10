@@ -9,6 +9,7 @@ import NativeTooltip from './NativeTooltip.vue';
 defineOptions({ name: 'NavBar' });
 
 const { t } = useI18n();
+const route = useRoute();
 
 function openSettingWindow() {
   openWindow(WINDOW_NAMES.SETTING);
@@ -20,7 +21,8 @@ function openSettingWindow() {
     <nav
       class="h-[calc(100%-1.4rem)] flex flex-col px-4 py-2 mt-[.7rem] mb-[.7rem] border-r border-r-input text-tx-secondary">
       <ul class="flex-auto">
-        <li class="sidebar-item no-drag cursor-pointer hover:text-primary-hover text-tx-primary">
+        <li class="sidebar-item no-drag cursor-pointer hover:text-primary-hover text-tx-primary"
+          :class="{ 'active': route.name === 'conversation' }">
           <native-tooltip :content="t('main.sidebar.conversations')">
             <iconify-icon icon="material-symbols:chat-outline" width="24" height="24" />
           </native-tooltip>
@@ -44,5 +46,9 @@ function openSettingWindow() {
 <style scoped>
 li {
   margin-top: 10px;
+}
+
+nav li.active {
+  color: var(--primary-color);
 }
 </style>

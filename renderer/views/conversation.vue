@@ -25,7 +25,7 @@ const router = useRouter();
 
 const messagesStore = useMessagesStore();
 const conversationsStore = useConversationsStore();
-const providersStore = useProvidersStore();
+// const providersStore = useProvidersStore();
 
 const providerId = computed(() => ((provider.value as string)?.split(':')[0] ?? ''));
 const selectedModel = computed(() => ((provider.value as string)?.split(':')[1] ?? ''));
