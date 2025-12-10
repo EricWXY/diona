@@ -4,17 +4,21 @@ import { initProviders } from './dataBase';
 import { useProvidersStore } from './stores/providers';
 import { useConversationsStore } from './stores/conversations';
 import { logger } from './utils/logger';
+import { useFontSize } from '@renderer/hooks/useFontSize';
+import { useNaiveLocale } from '@renderer/hooks/useNaiveLocale';
+import { useNaiveTheme } from '@renderer/hooks/useNaiveTheme';
+
 import NavBar from '@renderer/components/NavBar.vue';
 import ResizeDivider from '@renderer/components/ResizeDivider.vue';
 import ConversationList from '@renderer/components/ConversationList/index.vue';
-import { useConfig } from '@renderer/hooks/useConfig';
 
 const sidebarWidth = ref(320);
 const { initialize: initializeProvidersStore } = useProvidersStore();
 const { initialize: initializeConversationsStore } = useConversationsStore();
+const { locale, dateLocale } = useNaiveLocale();
+const { theme, themeOverrides } = useNaiveTheme();
 
-useConfig();
-
+useFontSize();
 onMounted(async () => {
   await initProviders();
   await initializeProvidersStore();
@@ -23,7 +27,8 @@ onMounted(async () => {
 });
 </script>
 <template>
-  <n-config-provider class="h-full w-[100vw] flex text-tx-primary">
+  <n-config-provider class="h-full w-[100vw] flex text-tx-primary" :locale="locale" :date-locale="dateLocale"
+    :theme="theme" :theme-overrides="themeOverrides">
     <n-message-provider>
       <aside class="sidebar h-full flex flex-shrink-0 flex-col" :style="{ width: sidebarWidth + 'px' }">
         <div class="flex-auto flex">

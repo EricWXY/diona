@@ -245,7 +245,7 @@ class WindowService {
   public focus(target: BrowserWindow | void | null) {
     if (!target) return;
     const name = this.getName(target);
-    if (target?.isMaximized()) {
+    if (target?.isMinimized()) {
       target?.restore();
       logManager.debug(`Window ${name} restored and focused`);
     } else {

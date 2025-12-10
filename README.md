@@ -2177,3 +2177,9 @@ export default configManager;
 
 - [x] 开发基础配置界面
 - [x] 配置界面与 ConfigService 交互(useConfig)
+
+# section_34
+
+- [x] 高亮色配置
+- [x] 组件库 ConfigProvider 配置
+- [x] 字体大小配置
