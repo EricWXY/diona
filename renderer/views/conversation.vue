@@ -1,16 +1,17 @@
 <script setup lang="ts">
 import type { SelectValue } from '@renderer/types';
-import { MAIN_WIN_SIZE } from '@common/constants';
+import { MAIN_WIN_SIZE, CONFIG_KEYS } from '@common/constants';
 import { throttle } from '@common/utils';
 import { useMessagesStore } from '@renderer/stores/messages';
+import { useConversationsStore } from '@renderer/stores/conversations';
+import { useProvidersStore } from '@renderer/stores/providers';
+import { useConfig } from '@renderer/hooks/useConfig';
 
 // import { messages } from '@renderer/testData';
 import ResizeDivider from '@renderer/components/ResizeDivider.vue';
 import MessageInput from '@renderer/components/MessageInput.vue';
 import MessageList from '@renderer/components/MessageList.vue';
 import CreateConversation from '@renderer/components/CreateConversation.vue';
-import { useConversationsStore } from '@renderer/stores/conversations';
-import { useProvidersStore } from '@renderer/stores/providers';
 
 const listHeight = ref(0);
 const listScale = ref(0.7);
@@ -22,14 +23,28 @@ const msgInputRef = useTemplateRef<{ selectedProvider: SelectValue }>('msgInputR
 
 const route = useRoute();
 const router = useRouter();
+const config = useConfig();
 
 const messagesStore = useMessagesStore();
 const conversationsStore = useConversationsStore();
-// const providersStore = useProvidersStore();
+const providersStore = useProvidersStore();
+
 
 const providerId = computed(() => ((provider.value as string)?.split(':')[0] ?? ''));
 const selectedModel = computed(() => ((provider.value as string)?.split(':')[1] ?? ''));
 const conversationId = computed(() => Number(route.params.id) as number | undefined);
+
+const defaultModel = computed(() => {
+  const vals: string[] = [];
+  providersStore.allProviders.forEach(provider => {
+    if (!provider.visible) return;
+    provider.models.forEach(model => {
+      vals.push(`${provider.id}:${model}`)
+    })
+  })
+  if (!vals.includes(config[CONFIG_KEYS.DEFAULT_MODEL] ?? '')) return null
+  return config[CONFIG_KEYS.DEFAULT_MODEL] || null;
+})
 
 const messageInputStatus = computed(() => {
   if (isStoping.value) return 'loading';
@@ -114,7 +129,7 @@ watch(() => listHeight.value, () => listScale.value = listHeight.value / window.
 
 watch([() => conversationId.value, () => msgInputRef.value], async ([id, msgInput]) => {
   if (!msgInput || !id) {
-    // TODO: 默认模型
+    provider.value = defaultModel.value
     return;
   }
 
