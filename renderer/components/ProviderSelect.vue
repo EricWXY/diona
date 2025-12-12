@@ -13,7 +13,7 @@ const providersStore = useProvidersStore();
 const selectedProvider = defineModel<SelectValue>('modelValue')
 
 
-const providerOptions = computed(() => providersStore.allProviders.map(item => ({
+const providerOptions = computed(() => providersStore.allProviders.filter(item => item.visible).map(item => ({
   label: item.title || item.name,
   type: 'group',
   key: item.id,

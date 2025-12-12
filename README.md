@@ -2183,3 +2183,7 @@ export default configManager;
 - [x] 高亮色配置
 - [x] 组件库 ConfigProvider 配置
 - [x] 字体大小配置
+
+# section_35
+
+- [x] 供应商（模型）配置

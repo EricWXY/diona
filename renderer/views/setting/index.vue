@@ -6,6 +6,8 @@ import { useNaiveLocale } from '@renderer/hooks/useNaiveLocale';
 import { useFontSize } from '@renderer/hooks/useFontSize';
 import { useConfig } from '@renderer/hooks/useConfig';
 
+import ProvidersConfig from './providers.vue';
+
 useFontSize();
 const { theme, themeOverrides } = useNaiveTheme();
 const { locale, dateLocale } = useNaiveLocale();
@@ -71,8 +73,7 @@ function onWindowClose() {
             </n-form>
           </n-tab-pane>
           <n-tab-pane name="provider" :tab="t('settings.provider.modelConfig')">
-            <!-- <providers-config /> -->
-            providers-config
+            <providers-config />
           </n-tab-pane>
         </n-tabs>
       </n-scrollbar>
