@@ -2187,3 +2187,7 @@ export default configManager;
 # section_35
 
 - [x] 供应商（模型）配置
+
+# section_36
+
+- [x] 快捷键功能

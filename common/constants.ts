@@ -26,6 +26,12 @@ export enum IPC_EVENTS {
   // main to renderer
   THEME_MODE_UPDATED = 'theme-mode-updated',
   CONFIG_UPDATED = 'config-updated',
+  SHORTCUT_CALLED = 'shortcut-called',
+}
+
+export enum SHORTCUT_KEYS {
+  CLOSE_WINDOW = 'CmdOrCtrl+W',
+  SEND_MESSAGE = 'CmdOrCtrl+Enter',
 }
 
 

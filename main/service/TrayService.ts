@@ -3,7 +3,7 @@ import { createTranslator, createLogo } from '../utils';
 import { CONFIG_KEYS, IPC_EVENTS, WINDOW_NAMES, MAIN_WIN_SIZE } from '@common/constants';
 
 import logManager from './LogService';
-// TODO: shortcutManager
+import shortcutManager from './ShortcutService';
 import windowManager from './WindowService';
 import configManager from './ConfigService';
 
@@ -48,7 +48,7 @@ class TrayService {
 
     this._tray.setToolTip(t('tray.tooltip') ?? 'Diona Application');
 
-    // TODO: 依赖快捷键Service 
+    shortcutManager.register('CmdOrCtrl+N', 'tray.showWindow', showWindow);
 
     this._tray.setContextMenu(Menu.buildFromTemplate([
       { label: t('tray.showWindow'), accelerator: 'CmdOrCtrl+N', click: showWindow },
@@ -78,13 +78,15 @@ class TrayService {
     this._updateTray();
     app.on('quit', () => {
       this.destroy();
-      //TODO: 移除快捷键
-    })
+      shortcutManager.unregister('tray.showWindow');
+    });
   }
   public destroy() {
     this._tray?.destroy();
     this._tray = null;
-    //TODO: 移除快捷键
+
+    shortcutManager.unregister('tray.showWindow');
+
     if (this._removeLanguageListener) {
       this._removeLanguageListener();
       this._removeLanguageListener = void 0;

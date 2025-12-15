@@ -62,6 +62,11 @@ const api: WindowApi = {
     return () => ipcRenderer.removeListener(IPC_EVENTS.START_A_DIALOGUE + 'back' + messageId, callback)
   },
 
+  onShortcutCalled: (key: string, cb: () => void) => {
+    ipcRenderer.on(IPC_EVENTS.SHORTCUT_CALLED + key, (_event) => cb());
+    return () => ipcRenderer.removeListener(IPC_EVENTS.SHORTCUT_CALLED + key, cb);
+  },
+
   logger: {
     debug: (message: string, ...meta: any[]) => ipcRenderer.send(IPC_EVENTS.LOG_DEBUG, message, ...meta),
     info: (message: string, ...meta: any[]) => ipcRenderer.send(IPC_EVENTS.LOG_INFO, message, ...meta),

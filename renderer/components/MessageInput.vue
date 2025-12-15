@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import type { SelectValue } from '@renderer/types';
+import { SHORTCUT_KEYS } from '@common/constants';
+import { listenShortcut } from '@renderer/utils/shortcut';
 import { Icon as IconifyIcon } from '@iconify/vue';
 import { NButton, NIcon } from 'naive-ui';
 
@@ -53,7 +55,16 @@ function handelSend() {
   emits('send', message.value);
 }
 
+const removeShortcutListeners = listenShortcut(SHORTCUT_KEYS.SEND_MESSAGE, () => {
+  if (props.status === 'streaming') return
+  if (isBtnDisabled.value) return
+  if (!fucused.value) return
+  handelSend();
+});
+
 watch(() => selectedProvider.value, (val) => emits('select', val));
+
+onUnmounted(() => removeShortcutListeners());
 
 defineExpose({
   selectedProvider,
