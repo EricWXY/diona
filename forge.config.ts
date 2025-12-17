@@ -3,13 +3,18 @@ const { FuseV1Options, FuseVersion } = require('@electron/fuses');
 
 module.exports = {
   packagerConfig: {
+    name: 'Diona',
+    icon: '/public/logo.ico',
     asar: true,
   },
   rebuildConfig: {},
   makers: [
     {
       name: '@electron-forge/maker-squirrel',
-      config: {},
+      config: {
+        setupIcon: './public/logo.ico',
+        appIcon: './public/logo.ico',
+      },
     },
     {
       name: '@electron-forge/maker-zip',

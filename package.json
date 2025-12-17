@@ -15,6 +15,10 @@
     "name": "EricWXY",
     "email": "ericwxy@foxmail.com"
   },
+  "build": {
+    "appId": "com.ericwxy.diona",
+    "icon": "public/logo.ico"
+  },
   "license": "MIT",
   "devDependencies": {
     "@electron-forge/cli": "7.8.1",

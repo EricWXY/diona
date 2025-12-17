@@ -46,3 +46,33 @@ body {
     opacity: 1;
   }
 }
+
+::-webkit-scrollbar {
+  width: 10px; /* 滚动条宽度 */
+}
+
+::-webkit-scrollbar-track {
+  background: transparent; /* 滚动条轨道透明 */
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: var(--text-secondary); /* 滚动条滑块颜色 - 中性灰色 */
+  border-radius: 4px; /* 圆角 */
+  border: 2px solid transparent; /* 边框透明，用于创建间隔效果 */
+  background-clip: content-box; /* 重要：确保背景只绘制在内容区域 */
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: #6b7280; /* 悬停时变亮 */
+}
+
+/* 隐藏滚动条上下箭头 */
+::-webkit-scrollbar-button {
+  display: none;
+}
+
+/* 适用于Firefox */
+* {
+  scrollbar-width: thin; /* 细滚动条 */
+  scrollbar-color: var(--text-secondary) transparent; /* 滑块颜色和轨道颜色 */
+}

@@ -14,6 +14,8 @@ import DragRegion from './components/DragRegion.vue';
 
 import hljs from 'highlight.js/lib/core';
 import xml from 'highlight.js/lib/languages/xml';
+import { preloadIcons } from './utils/icons';
+import logger from './utils/logger';
 
 hljs.registerLanguage('vue', xml);
 
@@ -45,10 +47,13 @@ const router = createRouter({
 
 const pinia = createPinia();
 
-createApp(App)
-  .use(pinia)
-  .use(router)
-  .use(components)
-  .use(i18n)
-  .use(errorHandler)
-  .mount('#app');
+preloadIcons().finally(() => {
+  logger.info('Icons preloaded');
+  createApp(App)
+    .use(pinia)
+    .use(router)
+    .use(components)
+    .use(i18n)
+    .use(errorHandler)
+    .mount('#app');
+})
